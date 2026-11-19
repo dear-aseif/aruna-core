@@ -30,3 +30,7 @@ coverage/
 .idea/
 .vscode/*
 !.vscode/extensions.json
+/test-results/
+/playwright-report/
+*.tsbuildinfo
+next-env.d.ts
