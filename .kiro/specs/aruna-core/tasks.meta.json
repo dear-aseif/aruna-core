@@ -56,6 +56,18 @@
         "chatSessionId": "sess_e1b3b106-1b92-49a3-aa32-e1d5405dc72f",
         "timestamp": 1795095449977
       }
+    ],
+    "2.4 Implement the Playbook service: JSON schema validation (core schema + pack fragments), activation that refuses incomplete Playbooks with the exact missing-field list, runtime reads of catalog/hours/thresholds/templates/pack from the active Playbook (the Playbook seeds the assistant name; after activation the name lives in settings — task 8.1). Define and register **both packs' schema fragments here** (Retail: catalog with variants, low-stock threshold, follow-up template; Services: treatment catalog with duration and price, hours, confirmation template) so pack registration and minimum seed exist before activation; the packs' entity migrations and workflows stay in groups 12 and 13": [
+      {
+        "executionId": "87df5f1c-f323-4d06-bcf3-43c8e091b95e",
+        "chatSessionId": "sess_f0cdfb98-19e6-493b-ad53-1f6a0b9ec601",
+        "timestamp": 1795095944121
+      },
+      {
+        "executionId": "87df5f1c-f323-4d06-bcf3-43c8e091b95e",
+        "chatSessionId": "sess_f0cdfb98-19e6-493b-ad53-1f6a0b9ec601",
+        "timestamp": 1795096289691
+      }
     ]
   }
 }
