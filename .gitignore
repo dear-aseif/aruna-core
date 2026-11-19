@@ -27,6 +27,9 @@ coverage/
 .vercel
 .DS_Store
 *.pem
+# Exception: the AWS RDS CA bundle is a public certificate file, not a secret.
+# src/server/db/config.ts loads it by default, so it must be committed.
+!db/certs/*.pem
 .idea/
 .vscode/*
 !.vscode/extensions.json
