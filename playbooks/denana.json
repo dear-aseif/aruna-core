@@ -1,0 +1,33 @@
+{
+  "business": {
+    "name": "Denana Facial Studio (synthetic)",
+    "type": "women-only facial treatment studio",
+    "timezone": "Asia/Makassar"
+  },
+  "assistantName": "Aruna",
+  "pack": "services",
+  "hours": [
+    { "day": "mon", "open": "09:00", "close": "17:00" },
+    { "day": "tue", "open": "09:00", "close": "17:00" },
+    { "day": "wed", "open": "09:00", "close": "17:00" },
+    { "day": "thu", "open": "09:00", "close": "17:00" },
+    { "day": "fri", "open": "09:00", "close": "17:00" },
+    { "day": "sat", "open": "09:00", "close": "15:00" }
+  ],
+  "schedule": { "briefingTime": "07:30" },
+  "catalog": {
+    "treatments": [
+      { "name": "Facial Dasar", "durationMinutes": 60, "price": 150000 },
+      { "name": "Facial Jerawat", "durationMinutes": 75, "price": 200000 },
+      { "name": "Facial Brightening", "durationMinutes": 75, "price": 225000 },
+      { "name": "Facial Anti-Aging", "durationMinutes": 90, "price": 275000 },
+      { "name": "Totok Wajah dan Masker", "durationMinutes": 45, "price": 100000 }
+    ]
+  },
+  "thresholds": {
+    "approvalExpiryMinutes": 15
+  },
+  "templates": {
+    "bookingConfirmation": "Halo {customer}, booking {treatment} pada {slot} sudah dikonfirmasi. Mohon hadir 10 menit lebih awal. Terima kasih."
+  }
+}

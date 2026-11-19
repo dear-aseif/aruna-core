@@ -68,6 +68,18 @@
         "chatSessionId": "sess_f0cdfb98-19e6-493b-ad53-1f6a0b9ec601",
         "timestamp": 1795096289691
       }
+    ],
+    "2.5 Write the two Playbook files (`/playbooks/denana.json`, `/playbooks/toko-seragam.json`) and the seed loader that creates both tenants from them. Denana's Playbook is seeded now with the minimum business shape already known (women-only facial treatments and bookings: treatment names, durations, prices, and hours in synthetic form shaped on the real business); its final configuration is a dated dependency handled in task 13.1, not a condition for this seed. All seed content is synthetic-only (C4)": [
+      {
+        "executionId": "a8dd16ae-983e-46a0-b2b2-a116c206da2f",
+        "chatSessionId": "sess_1010ad42-dec7-41f0-b032-b273f0d38275",
+        "timestamp": 1795096649654
+      },
+      {
+        "executionId": "a8dd16ae-983e-46a0-b2b2-a116c206da2f",
+        "chatSessionId": "sess_1010ad42-dec7-41f0-b032-b273f0d38275",
+        "timestamp": 1795097070292
+      }
     ]
   }
 }

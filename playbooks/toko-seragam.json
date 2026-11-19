@@ -1,0 +1,70 @@
+{
+  "business": {
+    "name": "Toko Seragam Maju (synthetic)",
+    "type": "school uniform shop",
+    "timezone": "Asia/Makassar"
+  },
+  "assistantName": "Aruna",
+  "pack": "retail",
+  "hours": [
+    { "day": "mon", "open": "07:30", "close": "17:00" },
+    { "day": "tue", "open": "07:30", "close": "17:00" },
+    { "day": "wed", "open": "07:30", "close": "17:00" },
+    { "day": "thu", "open": "07:30", "close": "17:00" },
+    { "day": "fri", "open": "07:30", "close": "17:00" },
+    { "day": "sat", "open": "07:30", "close": "14:00" }
+  ],
+  "schedule": { "briefingTime": "07:00" },
+  "catalog": {
+    "products": [
+      {
+        "name": "Kemeja SD Putih",
+        "variants": [
+          { "sku": "KSD-PTH-S", "size": "S", "price": 55000 },
+          { "sku": "KSD-PTH-M", "size": "M", "price": 58000 },
+          { "sku": "KSD-PTH-L", "size": "L", "price": 61000 }
+        ]
+      },
+      {
+        "name": "Celana SD Merah",
+        "variants": [
+          { "sku": "CSD-MRH-S", "size": "S", "price": 60000 },
+          { "sku": "CSD-MRH-M", "size": "M", "price": 63000 },
+          { "sku": "CSD-MRH-L", "size": "L", "price": 66000 }
+        ]
+      },
+      {
+        "name": "Kemeja SMP Putih",
+        "variants": [
+          { "sku": "KSMP-PTH-M", "size": "M", "price": 68000 },
+          { "sku": "KSMP-PTH-L", "size": "L", "price": 71000 },
+          { "sku": "KSMP-PTH-XL", "size": "XL", "price": 74000 }
+        ]
+      },
+      {
+        "name": "Celana SMP Biru",
+        "variants": [
+          { "sku": "CSMP-BRU-M", "size": "M", "price": 72000 },
+          { "sku": "CSMP-BRU-L", "size": "L", "price": 75000 },
+          { "sku": "CSMP-BRU-XL", "size": "XL", "price": 78000 }
+        ]
+      },
+      {
+        "name": "Rok SMA Abu-abu",
+        "variants": [
+          { "sku": "RSMA-ABU-M", "size": "M", "price": 80000 },
+          { "sku": "RSMA-ABU-L", "size": "L", "price": 83000 },
+          { "sku": "RSMA-ABU-XL", "size": "XL", "price": 86000 }
+        ]
+      }
+    ]
+  },
+  "thresholds": {
+    "lowStock": 5,
+    "approvalAmountLimit": 5000000,
+    "approvalExpiryMinutes": 15
+  },
+  "templates": {
+    "supplierFollowUp": "Halo {supplier}, kami menindaklanjuti pesanan {poReference}: {item} sebanyak {quantity}. Mohon konfirmasi jadwal pengiriman. Terima kasih."
+  }
+}
