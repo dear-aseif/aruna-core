@@ -18,9 +18,9 @@ All build sessions run under one Kiro sign-in (Google sign-in, 4,000 Kiroween cr
 ## Tasks
 
 - [ ] 1. Repository and project scaffold
-  - [ ] 1.1 Create the public GitHub repository `aruna-core` under the MIT licence; commit `/.kiro/specs/aruna-core/` containing `requirements.md`, `design.md`, and this `tasks.md` from the first commit, plus initial steering notes capturing the design's binding rules (API-first client separation, tenant isolation, safety mandate C3)
-  - [ ] 1.2 Scaffold the Next.js application (App Router, TypeScript), Tailwind, PWA manifest and install metadata, environment configuration, and test tooling (Vitest, Playwright)
-  - [ ] 1.3 Provision the Lightsail managed PostgreSQL database; wire database connections with per-session tenant variable support (`SET LOCAL app.tenant_id`); set up SQL migrations
+  - [x] 1.1 Create the public GitHub repository `aruna-core` under the MIT licence; commit `/.kiro/specs/aruna-core/` containing `requirements.md`, `design.md`, and this `tasks.md` from the first commit, plus initial steering notes capturing the design's binding rules (API-first client separation, tenant isolation, safety mandate C3)
+  - [x] 1.2 Scaffold the Next.js application (App Router, TypeScript), Tailwind, PWA manifest and install metadata, environment configuration, and test tooling (Vitest, Playwright)
+  - [x] 1.3 Provision the Lightsail managed PostgreSQL database; wire database connections with per-session tenant variable support (`SET LOCAL app.tenant_id`); set up SQL migrations
   - _Requirements: C1, 11.1_
 
 - [ ] 2. Tenant foundation, auth, and Playbook service
