@@ -141,6 +141,143 @@ graph TD
   G14 --> G15["15. Final checkpoint - build complete"]
 ```
 
+Execution waves (each wave depends on every earlier wave completing; inside a wave, tasks run in numeric order):
+
+```json
+{
+  "waves": [
+    {
+      "id": 0,
+      "tasks": [
+        "1.1",
+        "1.2",
+        "1.3"
+      ]
+    },
+    {
+      "id": 1,
+      "tasks": [
+        "2.1",
+        "2.2",
+        "2.3",
+        "2.4",
+        "2.5",
+        "2.6"
+      ]
+    },
+    {
+      "id": 2,
+      "tasks": [
+        "3.1"
+      ]
+    },
+    {
+      "id": 3,
+      "tasks": [
+        "4.1",
+        "4.2",
+        "4.3",
+        "4.4",
+        "4.5"
+      ]
+    },
+    {
+      "id": 4,
+      "tasks": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4"
+      ]
+    },
+    {
+      "id": 5,
+      "tasks": [
+        "6.1",
+        "6.2",
+        "6.3",
+        "6.4"
+      ]
+    },
+    {
+      "id": 6,
+      "tasks": [
+        "7.1"
+      ]
+    },
+    {
+      "id": 7,
+      "tasks": [
+        "8.1",
+        "8.2",
+        "8.3"
+      ]
+    },
+    {
+      "id": 8,
+      "tasks": [
+        "9.1",
+        "9.2",
+        "9.3",
+        "9.4"
+      ]
+    },
+    {
+      "id": 9,
+      "tasks": [
+        "10.1",
+        "10.2",
+        "10.3",
+        "10.4",
+        "10.5"
+      ]
+    },
+    {
+      "id": 10,
+      "tasks": [
+        "11.1"
+      ]
+    },
+    {
+      "id": 11,
+      "tasks": [
+        "12.1",
+        "12.2",
+        "12.3",
+        "12.4",
+        "12.5",
+        "12.6"
+      ]
+    },
+    {
+      "id": 12,
+      "tasks": [
+        "13.1",
+        "13.2",
+        "13.3",
+        "13.4",
+        "13.5"
+      ]
+    },
+    {
+      "id": 13,
+      "tasks": [
+        "14.1",
+        "14.2",
+        "14.3",
+        "14.4"
+      ]
+    },
+    {
+      "id": 14,
+      "tasks": [
+        "15.1"
+      ]
+    }
+  ]
+}
+```
+
 - Groups run in the order above; inside each group, sub-tasks run in numeric order and the test sub-tasks are written before the implementation they cover (test-first house rule).
 - Checkpoints (3, 7, 11, 15) are hard stops: the group before them must be fully green and founder-reviewed before the next group starts.
 - Task 13.1 additionally depends on an external input: Denana's final configuration from the discovery session, due by 22 Nov 2026. Group 12 does not depend on it, which is why the Retail Pack is built first.
