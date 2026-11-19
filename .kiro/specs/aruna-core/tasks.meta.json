@@ -80,6 +80,30 @@
         "chatSessionId": "sess_1010ad42-dec7-41f0-b032-b273f0d38275",
         "timestamp": 1795097070292
       }
+    ],
+    "2.6 Write tenant-isolation tests (two seeded tenants, cross-access refused and audited) and Playbook-validation tests": [
+      {
+        "executionId": "6374a8c9-8916-4fff-8a58-1fb2d5b3c34b",
+        "chatSessionId": "sess_81515269-fd1b-4177-a0d0-fd884eefdf7c",
+        "timestamp": 1795097504293
+      },
+      {
+        "executionId": "ef0a7bbd-fefc-4adf-8d11-8de879c0bb8f",
+        "chatSessionId": "sess_81515269-fd1b-4177-a0d0-fd884eefdf7c",
+        "timestamp": 1795097533556
+      },
+      {
+        "executionId": "ef0a7bbd-fefc-4adf-8d11-8de879c0bb8f",
+        "chatSessionId": "sess_81515269-fd1b-4177-a0d0-fd884eefdf7c",
+        "timestamp": 1795098060833
+      }
+    ],
+    "2. Tenant foundation, auth, and Playbook service": [
+      {
+        "executionId": "ef0a7bbd-fefc-4adf-8d11-8de879c0bb8f",
+        "chatSessionId": "sess_81515269-fd1b-4177-a0d0-fd884eefdf7c",
+        "timestamp": 1795098060912
+      }
     ]
   }
 }

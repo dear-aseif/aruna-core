@@ -2,6 +2,7 @@ import { randomBytes, randomUUID } from "node:crypto";
 import { afterAll, describe, expect, it } from "vitest";
 import { closeAllPools, withTenantSession } from "@/server/db";
 import { withTenant, type Caller } from "@/server/dal";
+import { trackTenant } from "../support/ledger";
 import { listPackIds } from "@/server/packs";
 import {
   PLAYBOOK_REFUSED,
@@ -148,6 +149,7 @@ describe("activation and runtime reads (database, runtime role)", () => {
   const mk = (): Caller => ({ tenantId: randomUUID(), actor: "system", actorId: "operator-test" });
 
   async function provision(c: Caller, label: string) {
+    trackTenant(c.tenantId);
     await withTenantSession(
       c.tenantId,
       (cl) => cl.query("insert into tenants (id, name, type, status) values ($1, $2, 'pending', 'inactive')", [c.tenantId, `PB ${label} ${run}`]),

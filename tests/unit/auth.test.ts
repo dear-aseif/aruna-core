@@ -9,6 +9,7 @@ import {
   withAuthenticatedTenant,
   AuthenticationError,
 } from "@/server/auth";
+import { trackTenant } from "../support/ledger";
 import { hashSessionToken } from "@/server/auth/service";
 import { decodeSessionToken, encodeSessionToken } from "@/server/auth/session-token";
 
@@ -41,6 +42,7 @@ async function provision(f: typeof A, name: string, status: "active" | "inactive
 }
 
 beforeAll(async () => {
+  for (const f of [A, B, INACTIVE]) trackTenant(f.tenant);
   await provision(A, `Test Tenant A ${run}`, "active");
   await provision(B, `Test Tenant B ${run}`, "active");
   await provision(INACTIVE, `Test Tenant X ${run}`, "inactive");

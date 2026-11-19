@@ -3,6 +3,7 @@ import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative, sep } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { closeAllPools, withTenantSession } from "@/server/db";
+import { trackTenant } from "../support/ledger";
 import {
   CROSS_TENANT_AUDIT_TYPE,
   CrossTenantReferenceError,
@@ -24,6 +25,7 @@ const A: Caller = { tenantId: randomUUID(), actor: "owner", actorId: randomUUID(
 const B: Caller = { tenantId: randomUUID(), actor: "owner", actorId: randomUUID() };
 
 async function provision(c: Caller, label: string) {
+  trackTenant(c.tenantId);
   await withTenantSession(
     c.tenantId,
     async (cl) => {
