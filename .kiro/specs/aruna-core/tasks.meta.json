@@ -1,0 +1,27 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "2.1 Create core migrations: `tenants`, `profiles`, `playbooks`, `settings`, `audit_log` — every business table carries `tenant_id`; Row-Level Security policies keyed to the session tenant variable; database grants deny UPDATE/DELETE on `audit_log`. The remaining core migrations are allocated where their features are built: `tasks` in 4.2, `threads` and `messages` in 8.1, `briefings` in 10.2": [
+      {
+        "executionId": "c278ef4a-1be2-4381-8fdf-cc4c72a3c307",
+        "chatSessionId": "sess_6e4d5a87-fa5c-489f-b5fd-8eba380263d2",
+        "timestamp": 1795088576984
+      },
+      {
+        "executionId": "c278ef4a-1be2-4381-8fdf-cc4c72a3c307",
+        "chatSessionId": "sess_6e4d5a87-fa5c-489f-b5fd-8eba380263d2",
+        "timestamp": 1795089445577
+      },
+      {
+        "executionId": "ed93544b-1d47-42cc-8963-3468852e4a0e",
+        "chatSessionId": "sess_14cf2b38-fa4c-44fd-9145-2a216cdcde4f",
+        "timestamp": 1795089703289
+      },
+      {
+        "executionId": "0bf02ad1-afbf-45ba-8511-110f69ebeb33",
+        "chatSessionId": "sess_6e4d5a87-fa5c-489f-b5fd-8eba380263d2",
+        "timestamp": 1795091878403
+      }
+    ]
+  }
+}
