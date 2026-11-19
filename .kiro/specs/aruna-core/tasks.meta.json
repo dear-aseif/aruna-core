@@ -22,6 +22,23 @@
         "chatSessionId": "sess_6e4d5a87-fa5c-489f-b5fd-8eba380263d2",
         "timestamp": 1795091878403
       }
+    ],
+    "2.2 Implement application-level credentials auth (Auth.js): owner login, profile↔tenant binding (one tenant per owner in this slice), server-side tenant resolution from the profile — never from client parameters": [
+      {
+        "executionId": "ff864873-2900-4912-b6b8-6c29b585408b",
+        "chatSessionId": "sess_1cf1e498-1a55-4ba4-85c6-a11715035028",
+        "timestamp": 1795093009166
+      },
+      {
+        "executionId": "a6bb7b2a-a1fa-47ca-84d4-e9f4300f4882",
+        "chatSessionId": "sess_1cf1e498-1a55-4ba4-85c6-a11715035028",
+        "timestamp": 1795093054047
+      },
+      {
+        "executionId": "a6bb7b2a-a1fa-47ca-84d4-e9f4300f4882",
+        "chatSessionId": "sess_1cf1e498-1a55-4ba4-85c6-a11715035028",
+        "timestamp": 1795093582500
+      }
     ]
   }
 }

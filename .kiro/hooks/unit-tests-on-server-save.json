@@ -1,0 +1,16 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "unit-tests-on-server-save",
+      "trigger": "PostFileSave",
+      "description": "Runs npm test when a file under src/server/ is saved",
+      "matcher": "(^|/)src/server/",
+      "action": {
+        "type": "command",
+        "command": "npm test",
+        "timeout": 120
+      }
+    }
+  ]
+}
