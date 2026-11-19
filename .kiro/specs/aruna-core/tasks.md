@@ -1,5 +1,7 @@
 # Implementation Plan — Aruna Core
 
+## Overview
+
 **Project:** Aruna Core — one AI agent skeleton for small businesses, proven by two applications
 **Competition:** Kiroween 2026 (Devpost) · Category: **Skeleton Crew** · Bonus claimed: Best Startup Project
 **Status:** APPROVED v1.1 — Gate 3 PASSED 19 Nov 2026 (founder verdict: PASS all). Amended 19 Nov 2026 to v1.1 following the GPT-6.1 Sol spec-review evaluation (founder PASS on the amendment list); status remains APPROVED (Gate 3). Spec phase S0 complete: requirements, design, and tasks are all locked.
@@ -33,7 +35,7 @@ All build sessions run under one Kiro sign-in (Google sign-in, 4,000 Kiroween cr
   - _Requirements: 1.1, 1.2, 1.3, 1.5, 2.1, 2.2, 2.3, 2.4 — Properties 1, 8_
 
 - [ ] 3. Checkpoint — foundation verified
-  - [ ] Ensure all tests pass; verify at the **service level** (through tests/scripts against the Playbook service and the Data Access Layer — the workspace UI only arrives in group 9) that switching a tenant's active Playbook changes the business data the services return (business name, catalog, assistant name) with no code change. Ask the founder if questions arise.
+  - [ ] 3.1 Ensure all tests pass; verify at the **service level** (through tests/scripts against the Playbook service and the Data Access Layer — the workspace UI only arrives in group 9) that switching a tenant's active Playbook changes the business data the services return (business name, catalog, assistant name) with no code change. Ask the founder if questions arise.
 
 - [ ] 4. Task pipeline and audit trail
   - [ ] 4.1 Implement the audit service: append-only writes for agent actions, Checker results, approval decisions, exports, and security events; per-task chronological history query
@@ -58,7 +60,7 @@ All build sessions run under one Kiro sign-in (Google sign-in, 4,000 Kiroween cr
   - _Requirements: 5.1, 5.2, 5.3, 5.5, 5.6, C3 — Properties 2, 3_
 
 - [ ] 7. Checkpoint — safety core verified
-  - [ ] Ensure all tests pass; run the Tier-3-style abuse cases by hand (fake payment claim, discount injection, cross-tenant reference) and confirm the pipeline refuses or escalates each one. Ask the founder if questions arise.
+  - [ ] 7.1 Ensure all tests pass; run the Tier-3-style abuse cases by hand (fake payment claim, discount injection, cross-tenant reference) and confirm the pipeline refuses or escalates each one. Ask the founder if questions arise.
 
 - [ ] 8. Agents and chat
   - [ ] 8.1 Create the `threads` and `messages` migrations (tenant-scoped, RLS) and implement threads and messages: one Maestro thread and one thread per active specialist per tenant; the assistant display name comes from settings and a rename takes effect immediately in chat, briefings, and the workspace
@@ -82,7 +84,7 @@ All build sessions run under one Kiro sign-in (Google sign-in, 4,000 Kiroween cr
   - _Requirements: 1.4, 9.1, 9.2, 9.3, 9.4 — Property 9_
 
 - [ ] 11. Checkpoint — core complete
-  - [ ] Ensure all tests pass; the skeleton runs end to end with both tenants seeded (no pack flows yet). Ask the founder if questions arise.
+  - [ ] 11.1 Ensure all tests pass; the skeleton runs end to end with both tenants seeded (no pack flows yet). Ask the founder if questions arise.
 
 - [ ] 12. Retail Pack — Toko Seragam
   - [ ] 12.1 Register the pack: entities and migrations for `products`, `variants`, `suppliers`, `purchase_orders`, `po_lines` (all tenant-scoped with RLS), using the pack's Playbook schema fragment defined and registered in task 2.4
@@ -109,12 +111,36 @@ All build sessions run under one Kiro sign-in (Google sign-in, 4,000 Kiroween cr
   - _Requirements: 11.1, 11.2, 11.3_
 
 - [ ] 15. Final checkpoint — build complete
-  - [ ] Ensure all tests pass and both proof applications run end to end from the live deployment. Hand over to the stage plan's polish/demo and submission stages (demo video and Devpost submission live in the stage plan, not in this task list).
+  - [ ] 15.1 Ensure all tests pass and both proof applications run end to end from the live deployment. Hand over to the stage plan's polish/demo and submission stages (demo video and Devpost submission live in the stage plan, not in this task list).
 
 ---
 
-## Coverage notes
+## Notes
 
 - Every requirement R1–R11 maps to at least one task above, and every correctness property 1–10 maps to at least one task carrying a named assertion for it (groups 2, 4, 5, 6, 10, 12, 13). The mapping states where each property is asserted; it does not by itself prove the property — the assertions in the test sub-tasks are the evidence. Constraints C1–C4 are enforced by task 1.1 (fresh repository), the scope of this list (C2), tasks 6.3/6.4 (C3), and the seed data rules (C4: synthetic-only demo data, real business shapes).
 - Out-of-scope items from the requirements (live channel connectors, payment execution, offline synchronisation build, voice, social media, multi-business accounts, self-serve signup, polished BYO-key UI, generative images) appear nowhere in this list by design.
 - The optional MCP connector for the WhatsApp Follow-up Agent is **not** in this plan; it enters only through a requirements change on the founder's explicit instruction.
+
+## Task Dependency Graph
+
+```mermaid
+graph TD
+  G1["1. Repo and scaffold"] --> G2["2. Tenant, auth and Playbook foundation"]
+  G2 --> G3["3. Checkpoint - foundation verified"]
+  G3 --> G4["4. Task pipeline and audit"]
+  G4 --> G5["5. Model Gateway"]
+  G5 --> G6["6. Checker and Approval Gate"]
+  G6 --> G7["7. Checkpoint - safety core verified"]
+  G7 --> G8["8. Agents and chat"]
+  G8 --> G9["9. Owner workspace UI"]
+  G9 --> G10["10. Briefing routine and export"]
+  G10 --> G11["11. Checkpoint - core complete"]
+  G11 --> G12["12. Retail Pack - Toko Seragam"]
+  G12 --> G13["13. Services Pack - Denana"]
+  G13 --> G14["14. Deployment and evaluation readiness"]
+  G14 --> G15["15. Final checkpoint - build complete"]
+```
+
+- Groups run in the order above; inside each group, sub-tasks run in numeric order and the test sub-tasks are written before the implementation they cover (test-first house rule).
+- Checkpoints (3, 7, 11, 15) are hard stops: the group before them must be fully green and founder-reviewed before the next group starts.
+- Task 13.1 additionally depends on an external input: Denana's final configuration from the discovery session, due by 22 Nov 2026. Group 12 does not depend on it, which is why the Retail Pack is built first.
