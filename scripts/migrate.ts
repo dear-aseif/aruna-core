@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { Client } from "pg";
-import { poolConfigFor } from "../src/server/db/config";
+import { parseDbUrl, poolConfigFor, ROLE_ENV } from "../src/server/db/config";
 import { describeError } from "./_util";
 
 const DIR = join(process.cwd(), "db", "migrations");
@@ -26,6 +26,11 @@ async function main() {
        )`,
     );
     const done = new Set((await client.query<{ filename: string }>("select filename from schema_migrations")).rows.map((r) => r.filename));
+    // Migrations grant to the runtime roles by name; hand them over as session settings.
+    for (const [key, role] of [["aruna.app_role", "app"], ["aruna.service_role", "service"]] as const) {
+      const creds = parseDbUrl(ROLE_ENV[role], process.env[ROLE_ENV[role]]);
+      await client.query("select set_config($1, $2, false)", [key, creds.user]);
+    }
     let applied = 0;
     for (const f of files) {
       if (done.has(f)) continue;
