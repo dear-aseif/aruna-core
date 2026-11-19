@@ -39,6 +39,23 @@
         "chatSessionId": "sess_1cf1e498-1a55-4ba4-85c6-a11715035028",
         "timestamp": 1795093582500
       }
+    ],
+    "2.3 Implement the Data Access Layer: tenant-scoped query helpers used by all server code; cross-tenant references are refused and recorded as `security.cross_tenant_attempt` audit entries": [
+      {
+        "executionId": "f4443acf-0881-42ea-a5e5-75d3aa2c429b",
+        "chatSessionId": "sess_e1b3b106-1b92-49a3-aa32-e1d5405dc72f",
+        "timestamp": 1795095192823
+      },
+      {
+        "executionId": "ef407d09-7e6f-45e4-bf85-c3d563ed8bd1",
+        "chatSessionId": "sess_e1b3b106-1b92-49a3-aa32-e1d5405dc72f",
+        "timestamp": 1795095224136
+      },
+      {
+        "executionId": "ef407d09-7e6f-45e4-bf85-c3d563ed8bd1",
+        "chatSessionId": "sess_e1b3b106-1b92-49a3-aa32-e1d5405dc72f",
+        "timestamp": 1795095449977
+      }
     ]
   }
 }

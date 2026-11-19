@@ -23,7 +23,7 @@ export async function closeAllPools(): Promise<void> {
 }
 
 /**
- * Seed of the Data Access Layer (full DAL is task 2.3). Runs `work` in one
+ * Low-level transaction wrapper under the Data Access Layer (src/server/dal). Runs `work` in one
  * transaction after binding the tenant with a bound parameter. `set_config`'s
  * third argument `true` makes it transaction-local, equal to SET LOCAL, so
  * the value cannot leak to another request on a pooled connection.
@@ -51,6 +51,32 @@ export async function withTenantSession<T>(
     } catch {
       /* connection already unusable; original error is what matters */
     }
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+/**
+ * One short transaction on the app role with a transaction-local setting and no tenant bound.
+ * Only for the narrow bootstrap lookups (sign-in profile lookup, session-token lookup); the
+ * policies behind these settings expose exactly one row. Lives here so that only src/server/db
+ * and the DAL ever touch a pool.
+ */
+export async function withLocalSetting<T>(
+  key: "app.login_email" | "app.session_token_hash",
+  value: string,
+  work: (c: PoolClient) => Promise<T>,
+): Promise<T> {
+  const client = await getPool("app").connect();
+  try {
+    await client.query("begin");
+    await client.query("select set_config($1, $2, true)", [key, value]);
+    const r = await work(client);
+    await client.query("commit");
+    return r;
+  } catch (err) {
+    await client.query("rollback").catch(() => {});
     throw err;
   } finally {
     client.release();

@@ -1,6 +1,6 @@
 import { createHash, randomBytes } from "node:crypto";
 import type { PoolClient } from "pg";
-import { getPool, withTenantSession } from "../db";
+import { withLocalSetting, withTenantSession } from "../db";
 import { dummyHash, MAX_PASSWORD_LENGTH, verifyPassword } from "./password";
 
 /** Absolute session lifetime (no sliding renewal). Decision recorded in the task 2.2 report. */
@@ -43,27 +43,6 @@ interface ProfileRow {
   email: string;
   password_hash: string;
   role: ProfileRole;
-}
-
-/** Runs on the app pool in one transaction with a transaction-local setting; no tenant needed. */
-async function withLocalSetting<T>(
-  key: "app.login_email" | "app.session_token_hash",
-  value: string,
-  work: (c: PoolClient) => Promise<T>,
-): Promise<T> {
-  const client = await getPool("app").connect();
-  try {
-    await client.query("begin");
-    await client.query("select set_config($1, $2, true)", [key, value]);
-    const r = await work(client);
-    await client.query("commit");
-    return r;
-  } catch (err) {
-    await client.query("rollback").catch(() => {});
-    throw err;
-  } finally {
-    client.release();
-  }
 }
 
 /**
