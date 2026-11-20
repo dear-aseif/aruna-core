@@ -125,7 +125,7 @@ describe("detail", () => {
   it("returns the task with its audit history oldest first, split into checks and approvals", async () => {
     const t = await createTask(A.token, { title: "detail", origin: "direct", agent: "booking" });
     await move(A, t.id, "working", "in_review");
-    await withTenant(agentOf(A), (tx) => recordCheckerResult(tx, t.id, { verdict: "pass", revision: 1 }));
+    await withTenant(agentOf(A), (tx) => recordCheckerResult(tx, t.id, { stage: "deterministic", outcome: "pass", verdict: "pass", revision: 1 }));
     await move(A, t.id, "pending_approval");
     await withTenant({ tenantId: A.tenant, actor: "owner", actorId: A.user }, (tx) => recordApprovalDecision(tx, t.id, { decision: "approved", revision: 1 }));
 

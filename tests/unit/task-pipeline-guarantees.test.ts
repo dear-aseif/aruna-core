@@ -1,3 +1,4 @@
+import { checkedTransition } from "../support/checked-transition";
 import { randomBytes, randomUUID } from "node:crypto";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { closeAllPools, withTenantSession } from "@/server/db";
@@ -63,7 +64,7 @@ const PATH: Partial<Record<TaskStatus, TaskStatus[]>> = {
 };
 async function taskAt(target: keyof typeof PATH): Promise<string> {
   const id = await newTask();
-  for (const s of PATH[target]!) await withTenant(AGENT, (tx) => transitionTask(tx, id, s));
+  for (const s of PATH[target]!) await withTenant(AGENT, (tx) => checkedTransition(tx, id, s));
   return id;
 }
 const row = (id: string) => withTenant(OWNER, (tx) => tx.getById<TaskRow>("tasks", id));

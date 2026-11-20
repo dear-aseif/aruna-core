@@ -9,6 +9,7 @@ export {
   isLegalTransition,
   IllegalTransitionError,
   RetryNotPermittedError,
+  UncheckedRevisionError,
   transitionTask,
   retryTask,
 } from "./state-machine";

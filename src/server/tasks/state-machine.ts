@@ -131,6 +131,38 @@ async function approvalExpiryMinutes(tx: TenantTx): Promise<number> {
   }
 }
 /**
+ * Gate ruling 6.4: In Review -> Done / Pending Approval was requested for a revision with no passing
+ * deterministic `checker.result`. Nothing was changed or audited.
+ */
+export class UncheckedRevisionError extends Error {
+  constructor(
+    readonly taskId: string,
+    readonly revision: number,
+    readonly to: TaskStatus,
+  ) {
+    super(`task has no passing deterministic check for revision ${revision}; cannot move in_review -> ${to}`);
+    this.name = "UncheckedRevisionError";
+  }
+}
+
+/**
+ * True when the task's audit history (same transaction) holds a passing checker.result for exactly
+ * this revision whose deterministic stage passed (a model_review entry carries `deterministic: "pass"`).
+ */
+async function hasPassingCheck(tx: TenantTx, taskId: string, revision: number): Promise<boolean> {
+  const rows = await tx.query<{ n: number }>(
+    `select 1 as n from audit_log
+      where task_id = $1 and type = 'checker.result'
+        and payload->>'outcome' = 'pass'
+        and (payload->>'revision')::int = $2
+        and (payload->>'stage' = 'deterministic' or payload->>'deterministic' = 'pass')
+      limit 1`,
+    [taskId, revision],
+  );
+  return rows.length > 0;
+}
+
+/**
  * Move a task along the legal flow, auditing the transition (`task.transition`: from, to,
  * actor from the caller) in the same transaction. Throws IllegalTransitionError, with no
  * change and no audit entry, for any move not in TRANSITIONS.
@@ -141,6 +173,10 @@ export async function transitionTask(tx: TenantTx, taskId: string, to: TaskStatu
   if (!isLegalTransition(task.status, to)) throw new IllegalTransitionError(task.status, to);
   // Gate ruling 6.3: the one amended edge is reserved for the draft-revision path.
   if (task.status === "pending_approval" && to === "in_review") throw new IllegalTransitionError(task.status, to);
+  // Gate ruling 6.4: leaving In Review forward needs a passing deterministic check for THIS revision.
+  if (task.status === "in_review" && (to === "done" || to === "pending_approval") && !(await hasPassingCheck(tx, taskId, task.payload_revision))) {
+    throw new UncheckedRevisionError(taskId, task.payload_revision, to);
+  }
   let error: string | null = null;
   if (to === "failed") {
     error = opts.error?.trim() ?? "";

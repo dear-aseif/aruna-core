@@ -1,10 +1,12 @@
+import { checkedTransition } from "../support/checked-transition";
 import { randomBytes, randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { closeAllPools, withTenantSession } from "@/server/db";
 import { withTenant, NotFoundError, type Caller } from "@/server/dal";
-import { getTaskHistory } from "@/server/audit";
+import { getTaskHistory, recordCheckerResult } from "@/server/audit";
 import {
   IllegalTransitionError,
+  UncheckedRevisionError,
   RetryNotPermittedError,
   TASK_STATUSES,
   TRANSITIONS,
@@ -56,7 +58,7 @@ const PATH: Record<TaskStatus, TaskStatus[]> = {
 };
 async function taskAt(target: TaskStatus): Promise<string> {
   const id = await newTask(OWNER_A);
-  for (const s of PATH[target]) await withTenant(AGENT_A, (tx) => transitionTask(tx, id, s, { error: "provider timeout" }));
+  for (const s of PATH[target]) await withTenant(AGENT_A, (tx) => checkedTransition(tx, id, s, { error: "provider timeout" }));
   return id;
 }
 describe("transition table", () => {
@@ -85,7 +87,7 @@ describe("transitions against the database", () => {
   it("each legal move succeeds and writes one audit entry with actor, from and to", async () => {
     const id = await newTask(OWNER_A);
     for (const to of ["working", "in_review", "pending_approval", "done"] as const)
-      await withTenant(AGENT_A, (tx) => transitionTask(tx, id, to));
+      await withTenant(AGENT_A, (tx) => checkedTransition(tx, id, to));
     const h = (await withTenant(OWNER_A, (tx) => getTaskHistory(tx, id))).filter((e) => e.type === "task.transition");
     expect(h.map((e) => [e.payload.from, e.payload.to])).toEqual([
       ["queued", "working"],
@@ -117,6 +119,47 @@ describe("transitions against the database", () => {
     expect(await withTenant(OWNER_A, (tx) => getTaskHistory(tx, id))).toHaveLength(n);
     const barrel = await import("@/server/tasks");
     expect("returnToReviewOnRevision" in barrel).toBe(false);
+  });
+  describe("gate ruling 6.4: in_review -> done / pending_approval needs a passing check for the CURRENT revision", () => {
+    const targets = ["pending_approval", "done"] as const;
+    const bump = (id: string) => withTenant(AGENT_A, (tx) => tx.query("update tasks set payload_revision = payload_revision + 1 where id = $1", [id]));
+    const record = (id: string, extra: Record<string, unknown> = {}) =>
+      withTenant(AGENT_A, async (tx) => {
+        const t = await tx.getById<{ payload_revision: number }>("tasks", id);
+        await recordCheckerResult(tx, id, { stage: "deterministic", outcome: "pass", revision: t.payload_revision, ...extra });
+      });
+    const refused = async (id: string, to: (typeof targets)[number]) => {
+      const n = (await withTenant(OWNER_A, (tx) => getTaskHistory(tx, id))).length;
+      await expect(withTenant(AGENT_A, (tx) => transitionTask(tx, id, to))).rejects.toBeInstanceOf(UncheckedRevisionError);
+      expect(await statusOf(OWNER_A, id)).toBe("in_review");
+      expect(await withTenant(OWNER_A, (tx) => getTaskHistory(tx, id))).toHaveLength(n);
+    };
+    it("a direct call with no passing check is refused for both targets, changing and auditing nothing", async () => {
+      const id = await taskAt("in_review");
+      for (const to of targets) await refused(id, to);
+    });
+    it("a failed check does not authorize the move", async () => {
+      const id = await taskAt("in_review");
+      await record(id, { outcome: "fail" });
+      for (const to of targets) await refused(id, to);
+    });
+    it("after a recorded passing check both moves are allowed", async () => {
+      for (const to of targets) {
+        const id = await taskAt("in_review");
+        await record(id);
+        await withTenant(AGENT_A, (tx) => transitionTask(tx, id, to));
+        expect(await statusOf(OWNER_A, id)).toBe(to);
+      }
+    });
+    it("a passing check for an OLD revision does not authorize the move", async () => {
+      const id = await taskAt("in_review");
+      await record(id); // revision 1
+      await bump(id); // the draft was revised
+      for (const to of targets) await refused(id, to);
+      await record(id); // a fresh pass for the current revision
+      await withTenant(AGENT_A, (tx) => transitionTask(tx, id, "done"));
+      expect(await statusOf(OWNER_A, id)).toBe("done");
+    });
   });
   it("rework (in_review -> working) is legal", async () => {
     const id = await taskAt("in_review");

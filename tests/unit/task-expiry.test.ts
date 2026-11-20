@@ -1,3 +1,4 @@
+import { checkedTransition } from "../support/checked-transition";
 import { randomBytes, randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
@@ -55,7 +56,7 @@ afterAll(async () => {
 async function pendingTask(c: Caller): Promise<string> {
   const t = await withTenant(c, (tx) => tx.insert<{ id: string }>("tasks", { title: "fixture", origin: "direct", agent: "booking", created_by: c.actorId }));
   for (const s of ["working", "in_review", "pending_approval"] as const)
-    await withTenant({ ...c, actor: "agent", actorId: AGENT_A.actorId }, (tx) => transitionTask(tx, t.id, s));
+    await withTenant({ ...c, actor: "agent", actorId: AGENT_A.actorId }, (tx) => checkedTransition(tx, t.id, s));
   return t.id;
 }
 /** Place the deadline relative to DATABASE time (seconds; negative = already passed). */

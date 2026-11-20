@@ -4,7 +4,7 @@ import { closeAllPools, withTenantSession } from "@/server/db";
 import { withTenant, type Caller } from "@/server/dal";
 import { getTaskHistory } from "@/server/audit";
 import { createModelGateway } from "@/server/gateway";
-import { transitionTask, type TaskRow } from "@/server/tasks";
+import { UncheckedRevisionError, transitionTask, type TaskRow } from "@/server/tasks";
 import { checkTask, checkTaskWithReview, registerCheckerPack, requiredFields } from "@/server/checker";
 import {
   NoActionHandlerError,
@@ -84,8 +84,14 @@ async function newTask(actionType: string, fields: Record<string, unknown>, rec?
 
 const row = (id: string) => withTenant(OWNER, (tx) => tx.getById<TaskRow>("tasks", id));
 const history = (id: string) => withTenant(OWNER, (tx) => getTaskHistory(tx, id));
-/** Move a task along the legal edges WITHOUT calling the Checker (a direct server path). */
+/** Try to move a task forward WITHOUT calling the Checker (a direct server path). Refused since gate ruling 6.4. */
 const forceTo = (id: string, to: "pending_approval" | "done") => withTenant(AGENT, (tx) => transitionTask(tx, id, to));
+const refusedForce = async (id: string, to: "pending_approval" | "done") => {
+  const before = (await history(id)).length;
+  await expect(forceTo(id, to)).rejects.toBeInstanceOf(UncheckedRevisionError);
+  expect((await row(id)).status).toBe("in_review");
+  expect(await history(id)).toHaveLength(before);
+};
 
 describe("Property 2: a gated action cannot execute around the Checker and Approval Gate", () => {
   it("approval refuses a task that never reached Pending Approval", async () => {
@@ -95,17 +101,17 @@ describe("Property 2: a gated action cannot execute around the Checker and Appro
     expect(store.effectsFor(id)).toHaveLength(0);
   });
 
-  it("a task pushed to Pending Approval without any Checker result cannot be approved", async () => {
+  it("a task cannot be pushed to Pending Approval without a Checker result, so it cannot be approved", async () => {
     const { id, recordId } = await newTask(T.bookingConfirm, {}, { state: "pending" });
-    await forceTo(id, "pending_approval");
-    await expect(approveTask(OWNER, id, 1)).rejects.toBeInstanceOf(RevisionNotCheckedError);
+    await refusedForce(id, "pending_approval"); // hardened by gate ruling 6.4 (was: allowed, then refused at approval)
+    await expect(approveTask(OWNER, id, 1)).rejects.toThrow(/not awaiting approval/);
     expect(store.get(recordId)!.state).toBe("pending");
     expect(store.effectsFor(id)).toHaveLength(0);
-    expect((await row(id)).status).toBe("pending_approval");
+    expect((await row(id)).status).toBe("in_review");
     expect((await history(id)).filter((e) => e.type === "approval.decision")).toHaveLength(0);
   });
 
-  it("a task pushed to Pending Approval after a FAILED check cannot be approved", async () => {
+  it("a task cannot be pushed to Pending Approval after a FAILED check, so it cannot be approved", async () => {
     const { id, recordId } = await newTask(T.bookingConfirm, {}, { state: "pending" });
     // Make the check fail: blank record_id.
     await withTenant(AGENT, (tx) =>
@@ -113,11 +119,9 @@ describe("Property 2: a gated action cannot execute around the Checker and Appro
     );
     const out = await withTenant(AGENT, (tx) => checkTask(tx, id, { packId: PACK }));
     expect(out.route).toBe("working");
-    await withTenant(AGENT, async (tx) => {
-      await transitionTask(tx, id, "in_review");
-      await transitionTask(tx, id, "pending_approval");
-    });
-    await expect(approveTask(OWNER, id, 1)).rejects.toBeInstanceOf(RevisionNotCheckedError);
+    await withTenant(AGENT, (tx) => transitionTask(tx, id, "in_review"));
+    await refusedForce(id, "pending_approval"); // hardened by gate ruling 6.4
+    await expect(approveTask(OWNER, id, 1)).rejects.toThrow(/not awaiting approval/);
     expect(store.effectsFor(id)).toHaveLength(0);
     expect(store.get(recordId)!.state).toBe("pending");
   });
@@ -127,8 +131,8 @@ describe("Property 2: a gated action cannot execute around the Checker and Appro
     registerActionHandler({ type, gated: false, execute: async () => undefined });
     try {
       const { id } = await newTask(type, {});
-      await forceTo(id, "pending_approval");
-      await expect(approveTask(OWNER, id, 1)).rejects.toThrow(); // no passing check, and not a gated handler
+      await refusedForce(id, "pending_approval"); // hardened by gate ruling 6.4
+      await expect(approveTask(OWNER, id, 1)).rejects.toThrow(); // never reached Pending Approval
       // Even with a genuine passing check on file, a non-gated handler is never run through the gate.
       const second = await newTask(type, {});
       const out = await withTenant(AGENT, (tx) => checkTask(tx, second.id, { packId: PACK }));
@@ -150,9 +154,9 @@ describe("Property 2: a gated action cannot execute around the Checker and Appro
 
   it("forcing a gated task straight to Done (or approving as a non-owner) executes no action effect", async () => {
     const { id, recordId } = await newTask(T.bookingConfirm, {}, { state: "pending" });
-    await forceTo(id, "done");
+    await refusedForce(id, "done"); // hardened by gate ruling 6.4 (was: allowed)
     expect(store.effectsFor(id)).toHaveLength(0);
-    expect(store.get(recordId)!.state).toBe("pending"); // state-machine move alone never runs a handler
+    expect(store.get(recordId)!.state).toBe("pending");
     const second = await newTask(T.bookingConfirm, {}, { state: "pending" });
     await withTenant(AGENT, (tx) => checkTask(tx, second.id, { packId: PACK }));
     await expect(approveTask(AGENT, second.id, 1)).rejects.toThrow();
@@ -229,8 +233,8 @@ describe("payment authority (Property 3, C3)", () => {
 
   it("a payment task not approved by the owner (or never checked) changes nothing", async () => {
     const { id, recordId } = await newTask(T.paymentMarkPaid, PAID(150000), { ...INVOICE });
-    await forceTo(id, "pending_approval"); // no Checker result
-    await expect(approveTask(OWNER, id, 1)).rejects.toBeInstanceOf(RevisionNotCheckedError);
+    await refusedForce(id, "pending_approval"); // no Checker result: refused (gate ruling 6.4)
+    await expect(approveTask(OWNER, id, 1)).rejects.toThrow(/not awaiting approval/);
     await expect(approveTask(AGENT, id, 1)).rejects.toThrow();
     expect(store.get(recordId)!.paymentState).toBe("unpaid");
   });
