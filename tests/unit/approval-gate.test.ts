@@ -3,7 +3,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { closeAllPools, withTenantSession } from "@/server/db";
 import { withTenant, type Caller } from "@/server/dal";
 import { getTaskHistory } from "@/server/audit";
-import { ApprovalExpiredError, expireTaskIfOverdue, transitionTask, type TaskRow } from "@/server/tasks";
+import { ApprovalExpiredError, NotAwaitingApprovalError, expireTaskIfOverdue, transitionTask, type TaskRow } from "@/server/tasks";
 import { checkTask, registerCheckerPack, requiredFields } from "@/server/checker";
 import {
   ApprovalNotPermittedError,
@@ -12,8 +12,6 @@ import {
   NoActionHandlerError,
   PaymentRuleFailedError,
   RefundNotExecutableError,
-  RevisionMismatchError,
-  RevisionNotCheckedError,
   TEST_ACTION_TYPES as T,
   TestRecordStore,
   approveTask,
@@ -165,9 +163,10 @@ describe("revision binding", () => {
     store.put(other, { state: "pending" });
     const revised = await withTenant(AGENT, (tx) => reviseDraft(tx, id, { action_type: T.bookingConfirm, fields: { record_id: other } }));
     expect(revised.payload_revision).toBe(2);
-    // The owner's stale approval (revision 1) is refused, and so is approval of the unchecked revision 2.
-    await expect(approveTask(OWNER, id, 1)).rejects.toBeInstanceOf(RevisionMismatchError);
-    await expect(approveTask(OWNER, id, 2)).rejects.toBeInstanceOf(RevisionNotCheckedError);
+    // Gate ruling 6.3: the task is back In Review, so neither the stale approval nor the unchecked revision can run.
+    expect(revised.status).toBe("in_review");
+    await expect(approveTask(OWNER, id, 1)).rejects.toBeInstanceOf(NotAwaitingApprovalError);
+    await expect(approveTask(OWNER, id, 2)).rejects.toBeInstanceOf(NotAwaitingApprovalError);
     expect(store.effects).toHaveLength(0);
     expect(store.get(recordId)!.state).toBe("pending");
     expect(store.get(other)!.state).toBe("pending");
@@ -177,6 +176,23 @@ describe("revision binding", () => {
     expect(await decisions(id)).toHaveLength(0);
   });
 
+  it("revising a Pending Approval task returns it to In Review, voids the approval, and a fresh check restores Pending Approval with a fresh expiry", async () => {
+    const { id, recordId } = await pending(T.bookingConfirm, {}, { state: "pending" });
+    const first = (await row(id)).approval_expires_at!;
+    const revised = await withTenant(AGENT, (tx) => reviseDraft(tx, id, { action_type: T.bookingConfirm, fields: { record_id: recordId } }));
+    expect(revised).toMatchObject({ status: "in_review", payload_revision: 2, approval_expires_at: null });
+    const tr = (await history(id)).filter((e) => e.type === "task.transition").at(-1)!;
+    expect(tr.payload).toMatchObject({ from: "pending_approval", to: "in_review", reason: "draft_revised" });
+    await expect(approveTask(OWNER, id, 1)).rejects.toThrow();
+    expect(store.effects).toHaveLength(0);
+    const out = await withTenant(AGENT, (tx) => checkTask(tx, id, { packId: PACK }));
+    expect(out.route).toBe("pending_approval");
+    const again = await row(id);
+    expect(again.status).toBe("pending_approval");
+    expect(again.approval_expires_at!.getTime()).toBeGreaterThan(first.getTime());
+    expect((await approveTask(OWNER, id, 2)).executed).toBe(true);
+    expect(store.effectsFor(id)).toHaveLength(1);
+  });
   it("a terminal task's draft cannot be revised", async () => {
     const { id } = await pending(T.bookingConfirm, {}, { state: "pending" });
     await approveTask(OWNER, id, 1);

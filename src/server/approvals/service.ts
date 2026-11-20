@@ -2,6 +2,7 @@ import { withTenant, type Caller, type TenantTx } from "../dal";
 import { NotFoundError } from "../dal/errors";
 import { AUDIT_TYPES, getTaskHistory, recordApprovalDecision } from "../audit";
 import { NotAwaitingApprovalError, registerExpiryActionCanceller, transitionTask, withApprovalAction, type TaskRow } from "../tasks";
+import { returnToReviewOnRevision } from "../tasks/state-machine";
 import { readPath } from "../checker/rules";
 import { getActionHandler, NoActionHandlerError, type ActionContext, type ActionHandler } from "./actions";
 
@@ -188,7 +189,7 @@ export async function rejectTask(caller: Caller, taskId: string, reason?: string
 /**
  * Change a task's draft. The revision increments, so the previous Checker result no longer matches
  * the current revision and any pending approval is voided (recorded as `approval.voided`).
- * The revised draft must pass the Checker again. A task already in a terminal status is refused.
+ * The revised draft must pass the Checker again; a Pending Approval task returns to In Review (gate ruling 6.3). A task already in a terminal status is refused.
  */
 export async function reviseDraft(tx: TenantTx, taskId: string, payload: Record<string, unknown>): Promise<TaskRow> {
   if (!isRecord(payload)) throw new Error("payload must be an object");
@@ -203,6 +204,9 @@ export async function reviseDraft(tx: TenantTx, taskId: string, payload: Record<
   await tx.audit(APPROVAL_AUDIT_TYPES.draftRevised, { from_revision: task.payload_revision, to_revision: updated.payload_revision, status: task.status }, taskId);
   if (task.status === "pending_approval")
     await tx.audit(APPROVAL_AUDIT_TYPES.approvalVoided, { revision: task.payload_revision, reason: "draft_changed", requires: "new_checker_pass" }, taskId);
+  // Gate ruling 6.3: a Pending Approval task returns to In Review in this same transaction. The
+  // revision bump already voids the Checker result; this clears the deadline and the status.
+  if (task.status === "pending_approval") return returnToReviewOnRevision(tx, taskId);
   return updated;
 }
 

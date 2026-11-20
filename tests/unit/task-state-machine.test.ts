@@ -60,12 +60,12 @@ async function taskAt(target: TaskStatus): Promise<string> {
   return id;
 }
 describe("transition table", () => {
-  it("is exactly the design §2.3 flow", () => {
+  it("is exactly the design §2.3 flow, as amended by gate ruling 6.3", () => {
     expect(TRANSITIONS).toEqual({
       queued: ["working"],
       working: ["in_review", "failed"],
       in_review: ["pending_approval", "done", "working", "failed"],
-      pending_approval: ["done", "rejected", "expired"],
+      pending_approval: ["done", "rejected", "expired", "in_review"],
       done: [],
       rejected: [],
       expired: [],
@@ -108,6 +108,16 @@ describe("transitions against the database", () => {
       expect(await withTenant(OWNER_A, (tx) => getTaskHistory(tx, id))).toHaveLength(before.length);
     }
   }, 120_000);
+  it("the general API refuses pending_approval -> in_review (reserved for draft revision), changing nothing", async () => {
+    const id = await taskAt("pending_approval");
+    const n = (await withTenant(OWNER_A, (tx) => getTaskHistory(tx, id))).length;
+    for (const reason of [undefined, "draft_revised"])
+      await expect(withTenant(AGENT_A, (tx) => transitionTask(tx, id, "in_review", { reason }))).rejects.toBeInstanceOf(IllegalTransitionError);
+    expect(await statusOf(OWNER_A, id)).toBe("pending_approval");
+    expect(await withTenant(OWNER_A, (tx) => getTaskHistory(tx, id))).toHaveLength(n);
+    const barrel = await import("@/server/tasks");
+    expect("returnToReviewOnRevision" in barrel).toBe(false);
+  });
   it("rework (in_review -> working) is legal", async () => {
     const id = await taskAt("in_review");
     await withTenant(AGENT_A, (tx) => transitionTask(tx, id, "working", { reason: "anomaly" }));

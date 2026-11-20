@@ -23,14 +23,16 @@ export type TaskStatus = (typeof TASK_STATUSES)[number];
 /** Statuses with no outgoing automatic transition. Only `failed` can leave, through the owner retry. */
 export const TERMINAL_STATUSES: readonly TaskStatus[] = ["done", "rejected", "expired", "failed"];
 /**
- * The transition table (design §2.3). Retry (failed -> queued) is deliberately NOT here:
+ * The transition table (design §2.3, as amended by gate ruling 6.3). Retry (failed -> queued) is deliberately NOT here:
  * it is a separate, owner-only operation (`retryTask`).
  */
 export const TRANSITIONS: Readonly<Record<TaskStatus, readonly TaskStatus[]>> = {
   queued: ["working"],
   working: ["in_review", "failed"],
   in_review: ["pending_approval", "done", "working", "failed"],
-  pending_approval: ["done", "rejected", "expired"],
+  // Amended by gate ruling 6.3: pending_approval -> in_review exists, but ONLY via the draft-revision
+  // path (`returnToReviewOnRevision`). The general `transitionTask` refuses it.
+  pending_approval: ["done", "rejected", "expired", "in_review"],
   done: [],
   rejected: [],
   expired: [],
@@ -98,14 +100,16 @@ async function writeStatus(
   to: TaskStatus,
   error: string | null,
   expiryMinutes: number | null = null,
+  clearExpiry = false,
 ): Promise<TaskRow> {
   await tx.query("select set_config('aruna.task_transition', 'on', true)");
   try {
     const rows = await tx.query<TaskRow>(
       `update tasks set status = $2, error = $3, updated_at = now(),
-         approval_expires_at = case when $4::int is not null then now() + make_interval(mins => $4::int) else approval_expires_at end
+         approval_expires_at = case when $4::int is not null then now() + make_interval(mins => $4::int)
+                                    when $5::boolean then null else approval_expires_at end
        where id = $1 returning *`,
-      [taskId, to, error, expiryMinutes],
+      [taskId, to, error, expiryMinutes, clearExpiry],
     );
     return rows[0];
   } finally {
@@ -135,6 +139,8 @@ export async function transitionTask(tx: TenantTx, taskId: string, to: TaskStatu
   if (!isStatus(to)) throw new Error(`unknown task status: ${String(to)}`);
   const task = await lockTask(tx, taskId);
   if (!isLegalTransition(task.status, to)) throw new IllegalTransitionError(task.status, to);
+  // Gate ruling 6.3: the one amended edge is reserved for the draft-revision path.
+  if (task.status === "pending_approval" && to === "in_review") throw new IllegalTransitionError(task.status, to);
   let error: string | null = null;
   if (to === "failed") {
     error = opts.error?.trim() ?? "";
@@ -159,5 +165,19 @@ export async function retryTask(tx: TenantTx, taskId: string): Promise<TaskRow> 
   if (task.status !== "failed") throw new IllegalTransitionError(task.status, "queued");
   const updated = await writeStatus(tx, taskId, "queued", null);
   await tx.audit(TASK_AUDIT_TYPES.retry, { from: "failed", to: "queued", previous_error: task.error }, taskId);
+  return updated;
+}
+
+/**
+ * INTERNAL (gate ruling 6.3): pending_approval -> in_review, reason `draft_revised`. Called only by
+ * `reviseDraft` (approvals/service.ts), in the same transaction as the revision. Not re-exported
+ * from the tasks barrel and takes no reason, so no other caller can use the edge; the general
+ * `transitionTask` refuses it. Clears `approval_expires_at`.
+ */
+export async function returnToReviewOnRevision(tx: TenantTx, taskId: string): Promise<TaskRow> {
+  const task = await lockTask(tx, taskId);
+  if (task.status !== "pending_approval") throw new IllegalTransitionError(task.status, "in_review");
+  const updated = await writeStatus(tx, taskId, "in_review", null, null, true);
+  await tx.audit(TASK_AUDIT_TYPES.transition, { from: "pending_approval", to: "in_review", reason: "draft_revised" }, taskId);
   return updated;
 }

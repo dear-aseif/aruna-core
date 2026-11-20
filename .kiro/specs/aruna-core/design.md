@@ -140,6 +140,7 @@ stateDiagram-v2
     PendingApproval --> Done: owner approves (action executes)
     PendingApproval --> Rejected: owner rejects
     PendingApproval --> Expired: expiry reached (default 15 min)
+    PendingApproval --> InReview: draft revised (gate ruling 6.3)
     Working --> Failed: provider failure / unrecoverable error
     InReview --> Failed: failure after bounded rework
     Rejected --> [*]
@@ -149,6 +150,7 @@ stateDiagram-v2
 ```
 
 - Every transition writes an Audit Log entry (actor, from-state, to-state, timestamp).
+- **Amendment (gate ruling 6.3, 20 Nov 2026): `PendingApproval → InReview` on draft revision.** Revising the draft of a Pending Approval task moves it back to In Review in the same transaction that increments the revision, voids the previous Checker result and pending approval, and clears `approval_expires_at`; the transition is audited with reason `draft_revised`. This edge is reachable **only** from the draft-revision path; the general transition API refuses it. After a fresh Checker pass the task re-enters Pending Approval with a fresh expiry. Revising a terminal task is still refused.
 - **Failed is a first-class terminal status (amendment #1).** A task whose execution fails — provider failure, malformed output past the retry bound, or rework exhausted (§2.7) — ends in **Failed**: terminal, visible on the board like any other end state, and carrying the recorded error on the task. Failure transitions are reachable from Working and InReview. A Failed task is never silently retried by the system; the **owner may retry it manually**, which records a new execution attempt and returns the task to Queued — the retry and its outcome are audited like any other transition.
 - **Audit is atomic with the mutation it records (amendment #5).** A business change and its Audit Log entry commit in the **same database transaction** — both or neither; there is no state in which a mutation exists without its audit entry, or an audit entry claims a mutation that rolled back. Model calls sit outside the database transaction, so they use two separate audit events: an **attempt** event when the call is made and an **outcome** event (usage / failure) when it returns (§2.7).
 - **Executor (amendment #14).** There is no separate queue platform in this slice: agent execution runs **inside the request that creates the task** (owner command, intake submission, or routine tick), and every execution attempt is recorded in the Audit Log (attempt start and outcome, linked to the task). A task left in Working by an interrupted execution is recovered by the per-minute cron sweep: a Working task whose attempt has gone stale is returned to Queued for a fresh attempt or, past the failure bound, marked Failed — it never hangs invisibly.
