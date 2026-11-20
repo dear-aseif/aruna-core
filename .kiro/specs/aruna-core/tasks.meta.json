@@ -147,6 +147,23 @@
         "chatSessionId": "sess_e7c0387e-6cfa-4974-b8e4-1229fb9f252a",
         "timestamp": 1795137184631
       }
+    ],
+    "4.2 Create the `tasks` migration (tenant-scoped, RLS) and implement the task state machine as the single module allowed to change task status (Queued → Working → In Review → Pending Approval → Done / Rejected / Expired / **Failed**), with every transition audited (actor, from/to, timestamp). Failed is a terminal status, visible on the board, entered from Working or In Review when a provider/model call fails; a failed task returns to Queued only through an explicit owner retry action, which is audited": [
+      {
+        "executionId": "013caa71-5bff-431a-9324-1670c8a66883",
+        "chatSessionId": "sess_0e4aaddd-6977-4a67-bf4e-27444e1bd615",
+        "timestamp": 1795137757647
+      },
+      {
+        "executionId": "90863339-af17-48b1-b8bc-8ef187dc455c",
+        "chatSessionId": "sess_0e4aaddd-6977-4a67-bf4e-27444e1bd615",
+        "timestamp": 1795137781262
+      },
+      {
+        "executionId": "90863339-af17-48b1-b8bc-8ef187dc455c",
+        "chatSessionId": "sess_0e4aaddd-6977-4a67-bf4e-27444e1bd615",
+        "timestamp": 1795139270559
+      }
     ]
   }
 }

@@ -6,8 +6,8 @@ export const SEEDED_TENANT_IDS = [
   "5eed0000-0000-4000-8000-00000000a5e2",
 ] as const;
 
-// Children first: sessions -> profiles (composite FK), everything -> tenants (ON DELETE RESTRICT).
-const CHILD_TABLES = ["sessions", "audit_log", "playbooks", "settings", "profiles"] as const;
+// Children first: sessions -> profiles (composite FK), audit_log -> tasks (composite FK), everything -> tenants (ON DELETE RESTRICT).
+const CHILD_TABLES = ["sessions", "audit_log", "tasks", "playbooks", "settings", "profiles"] as const;
 const RLS_TABLES = [...CHILD_TABLES, "tenants"] as const;
 
 /**

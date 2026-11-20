@@ -56,7 +56,7 @@ async function main() {
   await coreSchemaChecks();
 }
 
-const CORE_TABLES = ["tenants", "profiles", "playbooks", "settings", "audit_log"];
+const CORE_TABLES = ["tenants", "profiles", "playbooks", "settings", "audit_log", "tasks"];
 
 async function expectCode(label: string, code: string, run: () => Promise<unknown>) {
   try {

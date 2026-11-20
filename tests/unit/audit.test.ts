@@ -44,9 +44,14 @@ afterAll(async () => {
   await closeAllPools();
 });
 
+/** Audit entries reference real tasks (composite FK since 4.2), so tests create one first. */
+async function newTask(c: Caller): Promise<string> {
+  const t = await withTenant(c, (tx) => tx.insert<{ id: string }>("tasks", { title: "audit fixture", origin: "direct", agent: "booking", created_by: c.actorId }));
+  return t.id;
+}
 describe("audit appends", () => {
   it("land with actor, actor_id, type and payload intact", async () => {
-    const task = randomUUID();
+    const task = await newTask(A);
     await withTenant(A, async (tx) => {
       await recordAgentAction(tx, task, "draft_produced", { items: 2 });
       await recordCheckerResult(tx, task, { passed: false, failures: ["amount_mismatch"] });
@@ -77,14 +82,15 @@ describe("audit appends", () => {
   });
 
   it("per-task history is chronological, including entries from one transaction and across transactions", async () => {
-    const task = randomUUID();
+    const task = await newTask(A);
     await withTenant(A, async (tx) => {
       await recordAgentAction(tx, task, "one");
       await recordAgentAction(tx, task, "two");
       await recordAgentAction(tx, task, "three");
     });
     await withTenant(A, (tx) => recordAgentAction(tx, task, "four"));
-    await withTenant(A, (tx) => recordAgentAction(tx, randomUUID(), "other-task"));
+    const other = await newTask(A);
+    await withTenant(A, (tx) => recordAgentAction(tx, other, "other-task"));
     const h = await withTenant(A, (tx) => getTaskHistory(tx, task));
     expect(h.map((e) => e.payload.action)).toEqual(["one", "two", "three", "four"]);
   });
@@ -102,7 +108,7 @@ describe("audit appends", () => {
   });
 
   it("an append inside a transaction that rolls back leaves no entry", async () => {
-    const task = randomUUID();
+    const task = await newTask(A);
     await expect(
       withTenant(A, async (tx) => {
         await recordAgentAction(tx, task, "will_roll_back");
@@ -113,7 +119,7 @@ describe("audit appends", () => {
   });
 
   it("another tenant's entries are invisible in history and list", async () => {
-    const task = randomUUID();
+    const task = await newTask(A);
     await withTenant(A, (tx) => recordAgentAction(tx, task, "secret"));
     expect(await withTenant(B, (tx) => getTaskHistory(tx, task))).toEqual([]);
     const bAll = await withTenant(B, (tx) => listAuditEntries(tx, { limit: 500 }));
