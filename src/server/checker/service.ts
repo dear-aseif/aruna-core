@@ -18,7 +18,7 @@ import { readPath, type Anomaly, type CheckRule } from "./rules";
  *   fail                     -> Working, with the anomaly on the task (at most MAX_REWORK_RETURNS times)
  *   fail after the bound     -> Failed (no further loop)
  * Payload shape this slice relies on: `payload.action_type` (string) and `payload.fields` (object).
- * Model review (task 6.2) is a later step and is not run here.
+ * Model review (task 6.2) lives in ./review.ts and reuses runDeterministicChecks / routeChecked.
  */
 export const MAX_REWORK_RETURNS = 3;
 
@@ -82,8 +82,19 @@ async function priorReworkReturns(tx: TenantTx, taskId: string): Promise<number>
   return history.filter((e) => e.type === AUDIT_TYPES.checkerResult && e.payload.route === "working").length;
 }
 
-/** Check one In Review task and route it. See the module comment. */
-export async function checkTask(tx: TenantTx, taskId: string, opts: CheckOptions = {}): Promise<CheckOutcome> {
+/** The locked task plus the result of the deterministic checks (task 6.1), before any routing. */
+export interface DeterministicCheck {
+  task: TaskRow;
+  packId: string;
+  actionType: unknown;
+  action: ReturnType<typeof getActionType>;
+  fields: Record<string, unknown> | null;
+  revision: number;
+  anomalies: Anomaly[];
+}
+
+/** Lock the task and run the deterministic checks. Writes nothing. */
+export async function runDeterministicChecks(tx: TenantTx, taskId: string, opts: CheckOptions = {}): Promise<DeterministicCheck> {
   const task = await tx.maybeOne<TaskRow>("select * from tasks where id = $1 for update", [taskId]);
   if (!task) throw new NotFoundError("tasks");
   if (task.status !== "in_review") throw new NotInReviewError(taskId, task.status);
@@ -92,7 +103,6 @@ export async function checkTask(tx: TenantTx, taskId: string, opts: CheckOptions
   const pack = getCheckerPack(packId);
   if (!pack) throw new NoCheckerRulesError(packId);
 
-  const revision = task.payload_revision;
   const actionType = readPath(task.payload, "action_type");
   const action = getActionType(actionType);
   const rawFields = readPath(task.payload, "fields");
@@ -112,7 +122,23 @@ export async function checkTask(tx: TenantTx, taskId: string, opts: CheckOptions
     const sources = (await pack.loadSources?.(tx, task)) ?? {};
     anomalies = evaluate(pack.rules, action.type, rawFields, sources);
   }
+  return { task, packId, actionType, action, fields: isRecord(rawFields) ? rawFields : null, revision: task.payload_revision, anomalies };
+}
 
+/**
+ * Route a checked task and write the anomaly, the `checker.result` audit entry and the transition
+ * in the caller's transaction. `stage` distinguishes deterministic results from model-review ones.
+ * Anomalies (deterministic or model flags) send the task back to Working until the rework bound.
+ */
+export async function routeChecked(
+  tx: TenantTx,
+  check: DeterministicCheck,
+  anomalies: Anomaly[],
+  stage: "deterministic" | "model_review",
+  extra: Record<string, unknown> = {},
+): Promise<CheckOutcome> {
+  const { task, packId, actionType, action, revision } = check;
+  const taskId = task.id;
   const passed = anomalies.length === 0;
   const prior = await priorReworkReturns(tx, taskId);
   let route: CheckRoute;
@@ -123,6 +149,7 @@ export async function checkTask(tx: TenantTx, taskId: string, opts: CheckOptions
   const summary = anomalies.map((a) => a.message).join("; ");
   await tx.query("update tasks set anomaly = $2, updated_at = now() where id = $1", [taskId, passed ? null : summary]);
   await recordCheckerResult(tx, taskId, {
+    stage,
     outcome: passed ? "pass" : "fail",
     revision,
     pack: packId,
@@ -131,12 +158,21 @@ export async function checkTask(tx: TenantTx, taskId: string, opts: CheckOptions
     rework_returns: reworkReturns,
     max_rework_returns: MAX_REWORK_RETURNS,
     anomalies,
+    ...extra,
   });
   const updated = await transitionTask(
     tx,
     taskId,
     route,
-    route === "failed" ? { error: `rework exhausted after ${MAX_REWORK_RETURNS} returns to Working: ${summary}`, reason: "rework_exhausted" } : { reason: passed ? "checker_passed" : "checker_anomaly" },
+    route === "failed"
+      ? { error: `rework exhausted after ${MAX_REWORK_RETURNS} returns to Working: ${summary}`, reason: "rework_exhausted" }
+      : { reason: passed ? "checker_passed" : stage === "model_review" ? "model_review_flag" : "checker_anomaly" },
   );
   return { passed, route, revision, anomalies, reworkReturns, task: { ...updated, anomaly: passed ? null : summary } };
+}
+
+/** Check one In Review task and route it. See the module comment. */
+export async function checkTask(tx: TenantTx, taskId: string, opts: CheckOptions = {}): Promise<CheckOutcome> {
+  const check = await runDeterministicChecks(tx, taskId, opts);
+  return routeChecked(tx, check, check.anomalies, "deterministic");
 }

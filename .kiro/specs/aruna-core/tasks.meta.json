@@ -302,6 +302,23 @@
         "chatSessionId": "sess_caa31243-c897-40c5-8bb7-f0858637dbc6",
         "timestamp": 1795167487680
       }
+    ],
+    "6.2 Implement the model-review step (via the gateway) that runs after deterministic checks pass and can only flag, never override a deterministic failure": [
+      {
+        "executionId": "a491cd1b-5ab4-4f59-8899-16d28baf9ca5",
+        "chatSessionId": "sess_2e092b2e-87f1-4771-9f85-df94a5742fef",
+        "timestamp": 1795168304395
+      },
+      {
+        "executionId": "34b09f3a-d136-49fb-bf15-337bb638b40e",
+        "chatSessionId": "sess_2e092b2e-87f1-4771-9f85-df94a5742fef",
+        "timestamp": 1795168333314
+      },
+      {
+        "executionId": "34b09f3a-d136-49fb-bf15-337bb638b40e",
+        "chatSessionId": "sess_2e092b2e-87f1-4771-9f85-df94a5742fef",
+        "timestamp": 1795168573495
+      }
     ]
   }
 }
