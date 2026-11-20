@@ -82,3 +82,13 @@ export async function withLocalSetting<T>(
     client.release();
   }
 }
+
+/**
+ * The ids of active tenants, and nothing else: the one cross-tenant read (security-definer
+ * function aruna_list_tenant_ids(), executable by the service role only). Used by system
+ * routines that then work per tenant inside tenant sessions.
+ */
+export async function listActiveTenantIds(): Promise<string[]> {
+  const r = await getPool("service").query<{ id: string }>("select aruna_list_tenant_ids() as id");
+  return r.rows.map((x) => x.id);
+}

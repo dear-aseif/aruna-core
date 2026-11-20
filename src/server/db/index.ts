@@ -1,2 +1,2 @@
-export { getPool, closeAllPools, withTenantSession, withLocalSetting } from "./pools";
+export { getPool, closeAllPools, withTenantSession, withLocalSetting, listActiveTenantIds } from "./pools";
 export { type DbRole } from "./config";

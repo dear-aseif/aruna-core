@@ -164,6 +164,18 @@
         "chatSessionId": "sess_0e4aaddd-6977-4a67-bf4e-27444e1bd615",
         "timestamp": 1795139270559
       }
+    ],
+    "4.3 Implement approval expiry: `approval_expires_at` set on entering Pending Approval (default 15 minutes, from Playbook config); a per-minute sweep (system cron) plus a lazy check on read/action mark overdue tasks Expired and cancel their actions": [
+      {
+        "executionId": "b5d7adb1-d3dc-4486-86b1-36a68c714d47",
+        "chatSessionId": "sess_1a61b887-df6f-43ac-9214-f8353542ea19",
+        "timestamp": 1795139909527
+      },
+      {
+        "executionId": "b5d7adb1-d3dc-4486-86b1-36a68c714d47",
+        "chatSessionId": "sess_1a61b887-df6f-43ac-9214-f8353542ea19",
+        "timestamp": 1795140451953
+      }
     ]
   }
 }

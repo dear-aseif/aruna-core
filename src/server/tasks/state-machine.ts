@@ -1,5 +1,6 @@
 import type { TenantTx } from "../dal";
 import { NotFoundError } from "../dal/errors";
+import { getActivePlaybook, NoActivePlaybookError } from "../playbook";
 /**
  * Task state machine (task 4.2, design §2.3 and amendment #1).
  *
@@ -91,16 +92,38 @@ async function lockTask(tx: TenantTx, taskId: string): Promise<TaskRow> {
   return row;
 }
 /** The one place that writes `tasks.status`. Caller has already validated the move. */
-async function writeStatus(tx: TenantTx, taskId: string, to: TaskStatus, error: string | null): Promise<TaskRow> {
+async function writeStatus(
+  tx: TenantTx,
+  taskId: string,
+  to: TaskStatus,
+  error: string | null,
+  expiryMinutes: number | null = null,
+): Promise<TaskRow> {
   await tx.query("select set_config('aruna.task_transition', 'on', true)");
   try {
     const rows = await tx.query<TaskRow>(
-      "update tasks set status = $2, error = $3, updated_at = now() where id = $1 returning *",
-      [taskId, to, error],
+      `update tasks set status = $2, error = $3, updated_at = now(),
+         approval_expires_at = case when $4::int is not null then now() + make_interval(mins => $4::int) else approval_expires_at end
+       where id = $1 returning *`,
+      [taskId, to, error, expiryMinutes],
     );
     return rows[0];
   } finally {
     await tx.query("select set_config('aruna.task_transition', '', true)");
+  }
+}
+/** Used when the active Playbook does not set thresholds.approvalExpiryMinutes (design: default 15). */
+export const DEFAULT_APPROVAL_EXPIRY_MINUTES = 15;
+/**
+ * The expiry window, read from the tenant's active Playbook at the moment of entering Pending
+ * Approval. A tenant with no active Playbook gets the default (a task cannot be left without a deadline).
+ */
+async function approvalExpiryMinutes(tx: TenantTx): Promise<number> {
+  try {
+    return (await getActivePlaybook(tx)).thresholds.approvalExpiryMinutes ?? DEFAULT_APPROVAL_EXPIRY_MINUTES;
+  } catch (e) {
+    if (e instanceof NoActivePlaybookError) return DEFAULT_APPROVAL_EXPIRY_MINUTES;
+    throw e;
   }
 }
 /**
@@ -117,10 +140,11 @@ export async function transitionTask(tx: TenantTx, taskId: string, to: TaskStatu
     error = opts.error?.trim() ?? "";
     if (!error) throw new Error("moving a task to failed requires a recorded error");
   }
-  const updated = await writeStatus(tx, taskId, to, error);
+  const expiryMinutes = to === "pending_approval" ? await approvalExpiryMinutes(tx) : null;
+  const updated = await writeStatus(tx, taskId, to, error, expiryMinutes);
   await tx.audit(
     TASK_AUDIT_TYPES.transition,
-    { from: task.status, to, ...(error ? { error } : {}), ...(opts.reason ? { reason: opts.reason } : {}) },
+    { from: task.status, to, ...(expiryMinutes !== null ? { approval_expiry_minutes: expiryMinutes } : {}), ...(error ? { error } : {}), ...(opts.reason ? { reason: opts.reason } : {}) },
     taskId,
   );
   return updated;

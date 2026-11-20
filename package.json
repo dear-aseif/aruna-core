@@ -13,7 +13,8 @@
     "db:bootstrap-roles": "tsx --env-file=.env.local scripts/bootstrap-roles.ts",
     "db:migrate": "tsx --env-file=.env.local scripts/migrate.ts",
     "db:check": "tsx --env-file=.env.local scripts/db-check.ts",
-    "db:seed": "tsx --env-file=.env.local scripts/seed.ts"
+    "db:seed": "tsx --env-file=.env.local scripts/seed.ts",
+    "tasks:sweep": "tsx --env-file=.env.local scripts/expire-approvals.ts"
   },
   "dependencies": {
     "argon2": "^0.45.2",
