@@ -104,6 +104,30 @@
         "chatSessionId": "sess_81515269-fd1b-4177-a0d0-fd884eefdf7c",
         "timestamp": 1795098060912
       }
+    ],
+    "3.1 Ensure all tests pass; verify at the **service level** (through tests/scripts against the Playbook service and the Data Access Layer — the workspace UI only arrives in group 9) that switching a tenant's active Playbook changes the business data the services return (business name, catalog, assistant name) with no code change. Ask the founder if questions arise.": [
+      {
+        "executionId": "e7facb32-23fc-4835-beb5-18258041283e",
+        "chatSessionId": "sess_7d9462fb-ad56-405d-b9d7-71d67bf6d913",
+        "timestamp": 1795135714368
+      },
+      {
+        "executionId": "36b89f92-3bd0-4dac-b3ee-64ed3c837046",
+        "chatSessionId": "sess_7d9462fb-ad56-405d-b9d7-71d67bf6d913",
+        "timestamp": 1795135844143
+      },
+      {
+        "executionId": "36b89f92-3bd0-4dac-b3ee-64ed3c837046",
+        "chatSessionId": "sess_7d9462fb-ad56-405d-b9d7-71d67bf6d913",
+        "timestamp": 1795136215671
+      }
+    ],
+    "3. Checkpoint — foundation verified": [
+      {
+        "executionId": "36b89f92-3bd0-4dac-b3ee-64ed3c837046",
+        "chatSessionId": "sess_7d9462fb-ad56-405d-b9d7-71d67bf6d913",
+        "timestamp": 1795136215735
+      }
     ]
   }
 }

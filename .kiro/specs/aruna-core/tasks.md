@@ -34,8 +34,8 @@ All build sessions run under one Kiro sign-in (Google sign-in, 4,000 Kiroween cr
   - [x] 2.6 Write tenant-isolation tests (two seeded tenants, cross-access refused and audited) and Playbook-validation tests
   - _Requirements: 1.1, 1.2, 1.3, 1.5, 2.1, 2.2, 2.3, 2.4 — Properties 1, 8_
 
-- [ ] 3. Checkpoint — foundation verified
-  - [ ] 3.1 Ensure all tests pass; verify at the **service level** (through tests/scripts against the Playbook service and the Data Access Layer — the workspace UI only arrives in group 9) that switching a tenant's active Playbook changes the business data the services return (business name, catalog, assistant name) with no code change. Ask the founder if questions arise.
+- [x] 3. Checkpoint — foundation verified
+  - [x] 3.1 Ensure all tests pass; verify at the **service level** (through tests/scripts against the Playbook service and the Data Access Layer — the workspace UI only arrives in group 9) that switching a tenant's active Playbook changes the business data the services return (business name, catalog, assistant name) with no code change. Ask the founder if questions arise.
 
 - [ ] 4. Task pipeline and audit trail
   - [ ] 4.1 Implement the audit service: append-only writes for agent actions, Checker results, approval decisions, exports, and security events; per-task chronological history query
