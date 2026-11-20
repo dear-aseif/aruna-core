@@ -3,7 +3,7 @@ import type { AdapterRequest, AdapterResponse, ProviderAdapter } from "../types"
 
 /** The one method of the Bedrock client the adapter uses; lets tests pass a mock client. */
 export interface BedrockSender {
-  send(command: ConverseCommand): Promise<ConverseCommandOutput>;
+  send(command: ConverseCommand, options?: { abortSignal?: AbortSignal }): Promise<ConverseCommandOutput>;
 }
 
 export interface BedrockAdapterOptions {
@@ -13,11 +13,19 @@ export interface BedrockAdapterOptions {
   client?: BedrockSender;
 }
 
+/**
+ * The real client. `maxAttempts: 1` disables the SDK's default retries: one gateway call is
+ * exactly one provider attempt (task 5.3), so accounting and the timeout cover every attempt.
+ */
+export function createBedrockClient(region: string): BedrockRuntimeClient {
+  return new BedrockRuntimeClient({ region, maxAttempts: 1 });
+}
+
 /** Amazon Bedrock adapter (Converse API). The only module that imports the Bedrock SDK. */
 export function createBedrockAdapter(options: BedrockAdapterOptions): ProviderAdapter {
   const { modelId } = options;
   if (!modelId.trim()) throw new Error("bedrock adapter requires a model id");
-  const client: BedrockSender = options.client ?? new BedrockRuntimeClient({ region: options.region });
+  const client: BedrockSender = options.client ?? createBedrockClient(options.region);
 
   return {
     provider: "bedrock",
@@ -29,6 +37,7 @@ export function createBedrockAdapter(options: BedrockAdapterOptions): ProviderAd
           system: request.system.trim() ? [{ text: request.system }] : undefined,
           messages: request.messages.map((m) => ({ role: m.role, content: [{ text: m.content }] })),
         }),
+        request.signal ? { abortSignal: request.signal } : undefined,
       );
       const blocks = out.output?.message?.content ?? [];
       const text = blocks.flatMap((b) => (typeof b.text === "string" ? [b.text] : [])).join("");

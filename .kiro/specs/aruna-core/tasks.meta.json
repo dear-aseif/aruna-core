@@ -239,6 +239,23 @@
         "chatSessionId": "sess_51e1ae8f-e69f-4ea9-9e2b-c551e9793a3d",
         "timestamp": 1795150587996
       }
+    ],
+    "5.3 Record every call as a `model.usage` audit entry (tenant, task, provider, model, tokens when reported). Every call must carry an association — a task ID, or a named routine context (e.g. briefing generation) that still records tenant and context; the tenant is derived from the trusted server context, never from call input. Enforce a per-call timeout. Accounting is written for successful calls, provider errors, and malformed outputs alike; provider failure, timeout, or malformed output fails the task with a visible error state (Failed) and no fabricated result": [
+      {
+        "executionId": "524fa53a-61ef-4bbf-a15d-477bada79c38",
+        "chatSessionId": "sess_f142cadb-2d77-4930-b768-3f7382749ae0",
+        "timestamp": 1795150856364
+      },
+      {
+        "executionId": "8bcff32e-538f-4658-8de3-a988c16f7dc5",
+        "chatSessionId": "sess_f142cadb-2d77-4930-b768-3f7382749ae0",
+        "timestamp": 1795150886204
+      },
+      {
+        "executionId": "8bcff32e-538f-4658-8de3-a988c16f7dc5",
+        "chatSessionId": "sess_f142cadb-2d77-4930-b768-3f7382749ae0",
+        "timestamp": 1795151713348
+      }
     ]
   }
 }

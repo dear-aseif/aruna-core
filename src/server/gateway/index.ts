@@ -1,5 +1,7 @@
-export { createModelGateway, bindGateway, resolveAssociation } from "./gateway";
-export type { BoundModelGateway, BoundCompleteRequest } from "./gateway";
+export { createModelGateway, bindGateway, resolveAssociation, DEFAULT_CALL_TIMEOUT_MS } from "./gateway";
+export type { BoundModelGateway, BoundCompleteRequest, GatewayOptions } from "./gateway";
+export { dalAccounting, MODEL_AUDIT_TYPES, GATEWAY_ACTOR_ID } from "./accounting";
+export type { CallContext, CallOutcome, CallOutcomeKind, GatewayAccounting } from "./accounting";
 export {
   adapterForTenant,
   createAdapter,

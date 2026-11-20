@@ -46,6 +46,8 @@ export interface AdapterRequest {
   association: Association;
   system: string;
   messages: Message[];
+  /** Aborted when the per-call timeout elapses; adapters should pass it to the provider client. */
+  signal?: AbortSignal;
 }
 
 export interface AdapterResponse {

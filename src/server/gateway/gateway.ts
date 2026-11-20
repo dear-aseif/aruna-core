@@ -1,3 +1,4 @@
+import { dalAccounting, type CallContext, type CallOutcomeKind, type GatewayAccounting } from "./accounting";
 import { GatewayError, ProviderTimeoutError } from "./errors";
 import type {
   Association,
@@ -5,6 +6,7 @@ import type {
   CompleteResult,
   ModelGateway,
   ProviderAdapter,
+  Usage,
 } from "./types";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -29,8 +31,48 @@ function isTimeout(err: unknown): boolean {
   return e?.name === "TimeoutError" || e?.name === "AbortError";
 }
 
-/** Build the gateway over one provider adapter. All validation happens before the adapter is touched. */
-export function createModelGateway(adapter: ProviderAdapter): ModelGateway {
+/** Per-call timeout default (amendment #13). Overridable per gateway through `GatewayOptions.timeoutMs`. */
+export const DEFAULT_CALL_TIMEOUT_MS = 60_000;
+
+export interface GatewayOptions {
+  /** Per-call timeout in milliseconds. Default: DEFAULT_CALL_TIMEOUT_MS. */
+  timeoutMs?: number;
+  /** Accounting sink. Default: DAL audit entries plus the Failed transition. Tests may substitute. */
+  accounting?: GatewayAccounting;
+}
+
+/** Run one provider attempt, aborting and failing with ProviderTimeoutError when `ms` elapses. */
+async function withTimeout<T>(ms: number, call: (signal: AbortSignal) => Promise<T>): Promise<T> {
+  const controller = new AbortController();
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => {
+      reject(new ProviderTimeoutError()); // first, so the timeout wins the race against the abort rejection
+      controller.abort();
+    }, ms);
+  });
+  try {
+    return await Promise.race([call(controller.signal), timeout]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+const OUTCOME_OF: Record<"provider_failure" | "timeout" | "malformed_output", CallOutcomeKind> = {
+  provider_failure: "provider_failure",
+  timeout: "timeout",
+  malformed_output: "malformed_output",
+};
+
+/**
+ * Build the gateway over one provider adapter. Validation happens before the adapter is touched;
+ * once a call is accepted, `model.attempt` is written first and `model.usage` closes it for every
+ * outcome. A failed call fails its task (when it has one) and is rethrown; no result is invented.
+ */
+export function createModelGateway(adapter: ProviderAdapter, options: GatewayOptions = {}): ModelGateway {
+  const timeoutMs = options.timeoutMs ?? DEFAULT_CALL_TIMEOUT_MS;
+  if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) throw new Error("gateway timeoutMs must be a positive number");
+  const accounting = options.accounting ?? dalAccounting;
   return {
     async complete(request: CompleteRequest): Promise<CompleteResult> {
       const association = resolveAssociation(request);
@@ -41,45 +83,75 @@ export function createModelGateway(adapter: ProviderAdapter): ModelGateway {
         throw new GatewayError("invalid_request", "at least one message is required", { association });
       }
 
-      let response;
+      const ctx: CallContext = {
+        tenantId: request.tenantId,
+        association,
+        provider: adapter.provider,
+        model: adapter.model,
+      };
+      await accounting.recordAttempt(ctx);
+
+      const started = Date.now();
+      let usage: Usage | undefined;
+      let result: CompleteResult | undefined;
+      let failure: GatewayError | undefined;
       try {
-        response = await adapter.generate({
-          tenantId: request.tenantId,
-          association,
-          system: request.system,
-          messages: request.messages,
-        });
-      } catch (err) {
-        if (err instanceof GatewayError) throw err;
-        throw new GatewayError(
-          isTimeout(err) ? "timeout" : "provider_failure",
-          isTimeout(err) ? "model call timed out" : "model provider failed",
-          { association, cause: err },
+        const response = await withTimeout(timeoutMs, (signal) =>
+          adapter.generate({
+            tenantId: request.tenantId,
+            association,
+            system: request.system,
+            messages: request.messages,
+            signal,
+          }),
         );
-      }
-
-      if (typeof response?.text !== "string") {
-        throw new GatewayError("malformed_output", "provider returned no text", { association });
-      }
-      const result: CompleteResult = { text: response.text };
-      if (response.usage) result.usage = response.usage;
-      if (!request.responseSchema) return result;
-
-      let json: unknown;
-      try {
-        json = JSON.parse(response.text);
+        if (typeof response?.text !== "string") {
+          throw new GatewayError("malformed_output", "provider returned no text", { association });
+        }
+        usage = response.usage;
+        result = { text: response.text };
+        if (response.usage) result.usage = response.usage;
+        if (request.responseSchema) {
+          let json: unknown;
+          try {
+            json = JSON.parse(response.text);
+          } catch (err) {
+            throw new GatewayError("malformed_output", "output is not valid JSON", { association, cause: err });
+          }
+          const checked = request.responseSchema.safeParse(json);
+          if (!checked.success) {
+            throw new GatewayError("malformed_output", "output failed schema validation", {
+              association,
+              cause: checked.error,
+            });
+          }
+          result.parsed = checked.data;
+        }
       } catch (err) {
-        throw new GatewayError("malformed_output", "output is not valid JSON", { association, cause: err });
+        result = undefined;
+        failure =
+          err instanceof GatewayError
+            ? err
+            : new GatewayError(
+                isTimeout(err) ? "timeout" : "provider_failure",
+                isTimeout(err) ? "model call timed out" : "model provider failed",
+                { association, cause: err },
+              );
       }
-      const checked = request.responseSchema.safeParse(json);
-      if (!checked.success) {
-        throw new GatewayError("malformed_output", "output failed schema validation", {
-          association,
-          cause: checked.error,
+
+      const durationMs = Date.now() - started;
+      if (failure) {
+        const kind = failure.kind === "timeout" || failure.kind === "malformed_output" ? failure.kind : "provider_failure";
+        await accounting.recordOutcome(ctx, {
+          outcome: OUTCOME_OF[kind],
+          usage,
+          durationMs,
+          error: `Model call failed (${kind}): ${failure.message}`,
         });
+        throw failure;
       }
-      result.parsed = checked.data;
-      return result;
+      await accounting.recordOutcome(ctx, { outcome: "success", usage, durationMs });
+      return result!;
     },
   };
 }

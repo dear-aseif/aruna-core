@@ -4,6 +4,8 @@ import { createBedrockAdapter, type BedrockSender } from "@/server/gateway/adapt
 import { createAdapter, resolveModelConfig } from "@/server/gateway/config";
 import { createModelGateway, GatewayError } from "@/server/gateway";
 
+// These suites test gateway logic without a database; accounting has its own suite (gateway-accounting.test.ts).
+const NO_ACCOUNTING = { accounting: { recordAttempt: async () => {}, recordOutcome: async () => {} } };
 const TENANT = "11111111-1111-4111-8111-111111111111";
 const ENV = { BEDROCK_REGION: "us-east-1", BEDROCK_MODEL_ID: "test.default-model-v1:0" };
 
@@ -76,7 +78,7 @@ describe("bedrock adapter mapping", () => {
 
   it("surfaces adapter failures as provider_failure through the gateway", async () => {
     const adapter = createBedrockAdapter({ region: "r", modelId: "m", client: mockClient(new Error("down")).client });
-    const gw = createModelGateway(adapter);
+    const gw = createModelGateway(adapter, NO_ACCOUNTING);
     await expect(
       gw.complete({ tenantId: TENANT, routineContext: "x", system: "s", messages: req.messages }),
     ).rejects.toMatchObject({ kind: "provider_failure" });
