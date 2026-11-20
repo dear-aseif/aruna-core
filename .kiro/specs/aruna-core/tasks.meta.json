@@ -227,6 +227,18 @@
         "chatSessionId": "sess_274e79a3-330b-40cc-bf6a-e6185ab302fb",
         "timestamp": 1795149436757
       }
+    ],
+    "5.2 Implement the Amazon Bedrock adapter as the default; per-tenant provider/model configuration in `settings` with the project default": [
+      {
+        "executionId": "5ef3b100-389a-496b-bf9d-43ae067ec54e",
+        "chatSessionId": "sess_51e1ae8f-e69f-4ea9-9e2b-c551e9793a3d",
+        "timestamp": 1795150132747
+      },
+      {
+        "executionId": "5ef3b100-389a-496b-bf9d-43ae067ec54e",
+        "chatSessionId": "sess_51e1ae8f-e69f-4ea9-9e2b-c551e9793a3d",
+        "timestamp": 1795150587996
+      }
     ]
   }
 }

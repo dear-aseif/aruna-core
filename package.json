@@ -17,6 +17,7 @@
     "tasks:sweep": "tsx --env-file=.env.local scripts/expire-approvals.ts"
   },
   "dependencies": {
+    "@aws-sdk/client-bedrock-runtime": "^3.1173.0",
     "argon2": "^0.45.2",
     "next": "^16.4.6",
     "next-auth": "^5.0.0-beta.32",
