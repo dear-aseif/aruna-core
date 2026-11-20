@@ -134,6 +134,11 @@
         "executionId": "74c34683-f801-4c1a-90b7-7c0818e41046",
         "chatSessionId": "sess_e7c0387e-6cfa-4974-b8e4-1229fb9f252a",
         "timestamp": 1795136848178
+      },
+      {
+        "executionId": "7005c55b-34e2-4189-8c7c-96bfa5ddaf7e",
+        "chatSessionId": "sess_4f94fc98-41de-490d-894a-408d3de65b00",
+        "timestamp": 1795143256048
       }
     ],
     "4.1 Implement the audit service: append-only writes for agent actions, Checker results, approval decisions, exports, and security events; per-task chronological history query": [
@@ -192,6 +197,23 @@
         "executionId": "99cd9c94-aa7c-4951-98c3-080e0d7e05a5",
         "chatSessionId": "sess_ec0a1a40-c5e4-4aef-8e3d-3cc0b2026416",
         "timestamp": 1795141459328
+      }
+    ],
+    "4.5 Write state-machine tests (legal/illegal transitions, including transitions into Failed and owner-only retry), expiry tests covering the deadline boundary (just before, exactly at, and just after `approval_expires_at`), an approve-versus-sweep race test (an approval and the expiry sweep acting on the same task concurrently — exactly one outcome wins and no action executes after Expired), and an audit-atomicity fault-injection test (forcing the audit write to fail rolls back the business mutation, and forcing the mutation to fail leaves no success audit entry)": [
+      {
+        "executionId": "18db5f10-2b9f-4849-b9f6-abb034768855",
+        "chatSessionId": "sess_4f94fc98-41de-490d-894a-408d3de65b00",
+        "timestamp": 1795141998453
+      },
+      {
+        "executionId": "7005c55b-34e2-4189-8c7c-96bfa5ddaf7e",
+        "chatSessionId": "sess_4f94fc98-41de-490d-894a-408d3de65b00",
+        "timestamp": 1795142026754
+      },
+      {
+        "executionId": "7005c55b-34e2-4189-8c7c-96bfa5ddaf7e",
+        "chatSessionId": "sess_4f94fc98-41de-490d-894a-408d3de65b00",
+        "timestamp": 1795143255974
       }
     ]
   }

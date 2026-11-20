@@ -37,12 +37,12 @@ All build sessions run under one Kiro sign-in (Google sign-in, 4,000 Kiroween cr
 - [x] 3. Checkpoint — foundation verified
   - [x] 3.1 Ensure all tests pass; verify at the **service level** (through tests/scripts against the Playbook service and the Data Access Layer — the workspace UI only arrives in group 9) that switching a tenant's active Playbook changes the business data the services return (business name, catalog, assistant name) with no code change. Ask the founder if questions arise.
 
-- [ ] 4. Task pipeline and audit trail
+- [x] 4. Task pipeline and audit trail
   - [x] 4.1 Implement the audit service: append-only writes for agent actions, Checker results, approval decisions, exports, and security events; per-task chronological history query
   - [x] 4.2 Create the `tasks` migration (tenant-scoped, RLS) and implement the task state machine as the single module allowed to change task status (Queued → Working → In Review → Pending Approval → Done / Rejected / Expired / **Failed**), with every transition audited (actor, from/to, timestamp). Failed is a terminal status, visible on the board, entered from Working or In Review when a provider/model call fails; a failed task returns to Queued only through an explicit owner retry action, which is audited
   - [x] 4.3 Implement approval expiry: `approval_expires_at` set on entering Pending Approval (default 15 minutes, from Playbook config); a per-minute sweep (system cron) plus a lazy check on read/action mark overdue tasks Expired and cancel their actions
   - [x] 4.4 Implement task operations for all origins (routine, maestro, direct, intake): create, list by tenant and status, detail with check and approval history
-  - [ ] 4.5 Write state-machine tests (legal/illegal transitions, including transitions into Failed and owner-only retry), expiry tests covering the deadline boundary (just before, exactly at, and just after `approval_expires_at`), an approve-versus-sweep race test (an approval and the expiry sweep acting on the same task concurrently — exactly one outcome wins and no action executes after Expired), and an audit-atomicity fault-injection test (forcing the audit write to fail rolls back the business mutation, and forcing the mutation to fail leaves no success audit entry)
+  - [x] 4.5 Write state-machine tests (legal/illegal transitions, including transitions into Failed and owner-only retry), expiry tests covering the deadline boundary (just before, exactly at, and just after `approval_expires_at`), an approve-versus-sweep race test (an approval and the expiry sweep acting on the same task concurrently — exactly one outcome wins and no action executes after Expired), and an audit-atomicity fault-injection test (forcing the audit write to fail rolls back the business mutation, and forcing the mutation to fail leaves no success audit entry)
   - _Requirements: 3.3, 5.4, 6.1, 6.2, 6.3 — Properties 4, 5_
 
 - [ ] 5. Model Gateway
