@@ -176,6 +176,23 @@
         "chatSessionId": "sess_1a61b887-df6f-43ac-9214-f8353542ea19",
         "timestamp": 1795140451953
       }
+    ],
+    "4.4 Implement task operations for all origins (routine, maestro, direct, intake): create, list by tenant and status, detail with check and approval history": [
+      {
+        "executionId": "1878ad0d-4810-4b57-9fe0-e3b67ce9b5dd",
+        "chatSessionId": "sess_ec0a1a40-c5e4-4aef-8e3d-3cc0b2026416",
+        "timestamp": 1795140964513
+      },
+      {
+        "executionId": "99cd9c94-aa7c-4951-98c3-080e0d7e05a5",
+        "chatSessionId": "sess_ec0a1a40-c5e4-4aef-8e3d-3cc0b2026416",
+        "timestamp": 1795140982675
+      },
+      {
+        "executionId": "99cd9c94-aa7c-4951-98c3-080e0d7e05a5",
+        "chatSessionId": "sess_ec0a1a40-c5e4-4aef-8e3d-3cc0b2026416",
+        "timestamp": 1795141459328
+      }
     ]
   }
 }
