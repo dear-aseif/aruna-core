@@ -280,6 +280,28 @@
         "chatSessionId": "sess_b62b92e4-d6f6-4b76-9485-c32aea9ae098",
         "timestamp": 1795152913201
       }
+    ],
+    "6.1 Implement the deterministic Checker framework: a per-pack rule registry; rules are pure functions over source records (required fields, number equality, recipient match); a failed check writes the specific anomaly to the task and returns it to Working": [
+      {
+        "executionId": "f664d543-4409-4a02-b32e-9fea9a444ac3",
+        "chatSessionId": "sess_e546a3f4-15e1-4540-934c-7e781b5ce3f7",
+        "timestamp": 1795166864774
+      },
+      {
+        "executionId": "c04b1fc8-d276-454a-96ac-d5d5cd48a420",
+        "chatSessionId": "sess_f948dc00-b291-4fa0-8b1f-bb2ffa6ba87a",
+        "timestamp": 1795166970948
+      },
+      {
+        "executionId": "857be4a2-dff2-4331-9646-26767cb3a54c",
+        "chatSessionId": "sess_caa31243-c897-40c5-8bb7-f0858637dbc6",
+        "timestamp": 1795167046201
+      },
+      {
+        "executionId": "857be4a2-dff2-4331-9646-26767cb3a54c",
+        "chatSessionId": "sess_caa31243-c897-40c5-8bb7-f0858637dbc6",
+        "timestamp": 1795167487680
+      }
     ]
   }
 }
