@@ -335,6 +335,45 @@
         "executionId": "fa60f2ff-5a8f-4086-b1af-e65c02f464df",
         "chatSessionId": "sess_b9f2d18e-1ebc-41a0-ba17-7635ad43a241",
         "timestamp": 1795170297206
+      },
+      {
+        "executionId": "1b71bb4d-098e-4971-9b64-9c47e5cf734b",
+        "chatSessionId": "sess_b9f2d18e-1ebc-41a0-ba17-7635ad43a241",
+        "timestamp": 1795170466235
+      },
+      {
+        "executionId": "1b71bb4d-098e-4971-9b64-9c47e5cf734b",
+        "chatSessionId": "sess_b9f2d18e-1ebc-41a0-ba17-7635ad43a241",
+        "timestamp": 1795170850203
+      }
+    ],
+    "6.4 Write Checker tests (each rule passes/fails on crafted records), a Property 2 bypass test (attempting to execute a gated action through a direct server path that skips the Checker and Approval Gate is refused), an execution-binding test (double approval executes once; a draft changed after checking cannot be approved on the old check), and a payment-authority test proving the deterministic rule is what authorizes a payment-state change: a model output accompanied by an approval event still cannot change a payment state when the deterministic rule fails, and no model output can precede a payment-state change without an approval event": [
+      {
+        "executionId": "b9a68d23-a5ea-4a4f-93a8-604c63f357fa",
+        "chatSessionId": "sess_f01d86d7-903e-4cf2-bcfa-de4af12db24b",
+        "timestamp": 1795171486193
+      },
+      {
+        "executionId": "b9a68d23-a5ea-4a4f-93a8-604c63f357fa",
+        "chatSessionId": "sess_f01d86d7-903e-4cf2-bcfa-de4af12db24b",
+        "timestamp": 1795172474267
+      },
+      {
+        "executionId": "1e376543-bfb0-48d3-9882-19adeb8589c4",
+        "chatSessionId": "sess_d3fd8a54-6d95-4e77-9abd-05a7ad1b4c98",
+        "timestamp": 1795172502318
+      },
+      {
+        "executionId": "1e376543-bfb0-48d3-9882-19adeb8589c4",
+        "chatSessionId": "sess_d3fd8a54-6d95-4e77-9abd-05a7ad1b4c98",
+        "timestamp": 1795172712802
+      }
+    ],
+    "6. Checker and Approval Gate": [
+      {
+        "executionId": "b9a68d23-a5ea-4a4f-93a8-604c63f357fa",
+        "chatSessionId": "sess_f01d86d7-903e-4cf2-bcfa-de4af12db24b",
+        "timestamp": 1795172474320
       }
     ]
   }
