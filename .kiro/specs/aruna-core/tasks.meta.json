@@ -128,6 +128,25 @@
         "chatSessionId": "sess_7d9462fb-ad56-405d-b9d7-71d67bf6d913",
         "timestamp": 1795136215735
       }
+    ],
+    "4. Task pipeline and audit trail": [
+      {
+        "executionId": "74c34683-f801-4c1a-90b7-7c0818e41046",
+        "chatSessionId": "sess_e7c0387e-6cfa-4974-b8e4-1229fb9f252a",
+        "timestamp": 1795136848178
+      }
+    ],
+    "4.1 Implement the audit service: append-only writes for agent actions, Checker results, approval decisions, exports, and security events; per-task chronological history query": [
+      {
+        "executionId": "ceadb0d1-dc28-4148-b924-15dbd7b18d30",
+        "chatSessionId": "sess_e7c0387e-6cfa-4974-b8e4-1229fb9f252a",
+        "timestamp": 1795136866395
+      },
+      {
+        "executionId": "ceadb0d1-dc28-4148-b924-15dbd7b18d30",
+        "chatSessionId": "sess_e7c0387e-6cfa-4974-b8e4-1229fb9f252a",
+        "timestamp": 1795137184631
+      }
     ]
   }
 }

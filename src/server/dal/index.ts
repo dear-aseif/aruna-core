@@ -5,7 +5,7 @@ import { CrossTenantReferenceError, NotFoundError, TenantContextError } from "./
 
 export { CrossTenantReferenceError, NotFoundError, TenantContextError } from "./errors";
 
-export type AuditActor = "owner" | "agent" | "system";
+export type AuditActor = "owner" | "agent" | "system" | "operator";
 
 /** Who is calling and for which tenant. Built server-side (from the session), never from client input. */
 export interface Caller {
@@ -25,9 +25,9 @@ function ident(name: string): string {
   return `"${name}"`;
 }
 
-/** Map an authenticated session to a Caller. Operators are not tenant day-to-day users: recorded as `system`. */
+/** Map an authenticated session to a Caller. Owner sessions are `owner`, operator sessions are `operator`; actorId is the profile user id. */
 export function callerFromAuth(ctx: AuthContext): Caller {
-  return { tenantId: ctx.tenantId, actor: ctx.role === "owner" ? "owner" : "system", actorId: ctx.userId };
+  return { tenantId: ctx.tenantId, actor: ctx.role === "owner" ? "owner" : "operator", actorId: ctx.userId };
 }
 
 function isRlsViolation(err: unknown): boolean {
