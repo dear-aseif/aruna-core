@@ -45,11 +45,11 @@ All build sessions run under one Kiro sign-in (Google sign-in, 4,000 Kiroween cr
   - [x] 4.5 Write state-machine tests (legal/illegal transitions, including transitions into Failed and owner-only retry), expiry tests covering the deadline boundary (just before, exactly at, and just after `approval_expires_at`), an approve-versus-sweep race test (an approval and the expiry sweep acting on the same task concurrently — exactly one outcome wins and no action executes after Expired), and an audit-atomicity fault-injection test (forcing the audit write to fail rolls back the business mutation, and forcing the mutation to fail leaves no success audit entry)
   - _Requirements: 3.3, 5.4, 6.1, 6.2, 6.3 — Properties 4, 5_
 
-- [ ] 5. Model Gateway
+- [x] 5. Model Gateway
   - [x] 5.1 Implement the gateway interface from the design (§2.7); agent code imports only the gateway, never a provider SDK
   - [x] 5.2 Implement the Amazon Bedrock adapter as the default; per-tenant provider/model configuration in `settings` with the project default
   - [x] 5.3 Record every call as a `model.usage` audit entry (tenant, task, provider, model, tokens when reported). Every call must carry an association — a task ID, or a named routine context (e.g. briefing generation) that still records tenant and context; the tenant is derived from the trusted server context, never from call input. Enforce a per-call timeout. Accounting is written for successful calls, provider errors, and malformed outputs alike; provider failure, timeout, or malformed output fails the task with a visible error state (Failed) and no fabricated result
-  - [ ] 5.4 Implement the test-only fake adapter (never wired into a deployed configuration) and gateway tests: a forced-failure test, a timeout test, a call-association test (a call without a task or named routine association is refused), and accounting tests proving a `model.usage` entry exists for success, provider-error, and malformed-output calls
+  - [x] 5.4 Implement the test-only fake adapter (never wired into a deployed configuration) and gateway tests: a forced-failure test, a timeout test, a call-association test (a call without a task or named routine association is refused), and accounting tests proving a `model.usage` entry exists for success, provider-error, and malformed-output calls
   - _Requirements: 10.1, 10.2, 10.3, 10.4 — Property 10_
 
 - [ ] 6. Checker and Approval Gate

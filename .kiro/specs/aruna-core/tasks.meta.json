@@ -256,6 +256,30 @@
         "chatSessionId": "sess_f142cadb-2d77-4930-b768-3f7382749ae0",
         "timestamp": 1795151713348
       }
+    ],
+    "5.4 Implement the test-only fake adapter (never wired into a deployed configuration) and gateway tests: a forced-failure test, a timeout test, a call-association test (a call without a task or named routine association is refused), and accounting tests proving a `model.usage` entry exists for success, provider-error, and malformed-output calls": [
+      {
+        "executionId": "adc93c65-2cb9-4ab6-add3-9935bf6d8a5a",
+        "chatSessionId": "sess_b62b92e4-d6f6-4b76-9485-c32aea9ae098",
+        "timestamp": 1795152056388
+      },
+      {
+        "executionId": "d2cbfe94-aad2-42e5-891e-8186de0ae6ad",
+        "chatSessionId": "sess_b62b92e4-d6f6-4b76-9485-c32aea9ae098",
+        "timestamp": 1795152085642
+      },
+      {
+        "executionId": "d2cbfe94-aad2-42e5-891e-8186de0ae6ad",
+        "chatSessionId": "sess_b62b92e4-d6f6-4b76-9485-c32aea9ae098",
+        "timestamp": 1795152913059
+      }
+    ],
+    "5. Model Gateway": [
+      {
+        "executionId": "d2cbfe94-aad2-42e5-891e-8186de0ae6ad",
+        "chatSessionId": "sess_b62b92e4-d6f6-4b76-9485-c32aea9ae098",
+        "timestamp": 1795152913201
+      }
     ]
   }
 }

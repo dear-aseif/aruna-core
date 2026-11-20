@@ -141,7 +141,8 @@ describe("sweep", () => {
     await setDeadline(A, notDue, 600);
     const r = await sweepExpiredApprovals();
     expect(r.errors).toEqual([]);
-    expect(r.expired).toBeGreaterThanOrEqual(2);
+    // The sweep is global: another test file's concurrent sweep may already have expired these
+    // tasks, so the count of this call is not asserted; the resulting states below are.
     expect((await row(A, dueA)).status).toBe("expired");
     expect((await row(B, dueB)).status).toBe("expired");
     expect((await row(A, notDue)).status).toBe("pending_approval");

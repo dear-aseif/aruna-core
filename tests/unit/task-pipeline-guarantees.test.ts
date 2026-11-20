@@ -124,11 +124,12 @@ describe("expiry at the approval_expires_at boundary, through both triggers", ()
     },
     lazy: async (id: string) => (await readTask(OWNER, id)).status,
   };
-  // Offsets from database time: 2 s before, the boundary instant itself, 1 ms after.
+  // Offsets from database time: 30 s before (a margin wider than any remote-DB/suite-load latency
+  // between writing the deadline and the check), the boundary instant itself, 1 ms after.
   // The live clock cannot be frozen, so "at" is the instant captured when the deadline is
   // written (the check happens at or after it); the predicate is `deadline <= clock_timestamp()`.
   const cases: [string, number, string][] = [
-    ["just before", 2, "pending_approval"],
+    ["just before", 30, "pending_approval"],
     ["exactly at", 0, "expired"],
     ["just after", -0.001, "expired"],
   ];
