@@ -215,6 +215,18 @@
         "chatSessionId": "sess_4f94fc98-41de-490d-894a-408d3de65b00",
         "timestamp": 1795143255974
       }
+    ],
+    "5.1 Implement the gateway interface from the design (§2.7); agent code imports only the gateway, never a provider SDK": [
+      {
+        "executionId": "61b1186c-22fd-4803-9977-c280b85fc0e5",
+        "chatSessionId": "sess_274e79a3-330b-40cc-bf6a-e6185ab302fb",
+        "timestamp": 1795149073184
+      },
+      {
+        "executionId": "61b1186c-22fd-4803-9977-c280b85fc0e5",
+        "chatSessionId": "sess_274e79a3-330b-40cc-bf6a-e6185ab302fb",
+        "timestamp": 1795149436757
+      }
     ]
   }
 }

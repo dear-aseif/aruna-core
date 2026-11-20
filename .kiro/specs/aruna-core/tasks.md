@@ -46,13 +46,13 @@ All build sessions run under one Kiro sign-in (Google sign-in, 4,000 Kiroween cr
   - _Requirements: 3.3, 5.4, 6.1, 6.2, 6.3 — Properties 4, 5_
 
 - [ ] 5. Model Gateway
-  - [ ] 5.1 Implement the gateway interface from the design (§2.7); agent code imports only the gateway, never a provider SDK
+  - [x] 5.1 Implement the gateway interface from the design (§2.7); agent code imports only the gateway, never a provider SDK
   - [ ] 5.2 Implement the Amazon Bedrock adapter as the default; per-tenant provider/model configuration in `settings` with the project default
   - [ ] 5.3 Record every call as a `model.usage` audit entry (tenant, task, provider, model, tokens when reported). Every call must carry an association — a task ID, or a named routine context (e.g. briefing generation) that still records tenant and context; the tenant is derived from the trusted server context, never from call input. Enforce a per-call timeout. Accounting is written for successful calls, provider errors, and malformed outputs alike; provider failure, timeout, or malformed output fails the task with a visible error state (Failed) and no fabricated result
   - [ ] 5.4 Implement the test-only fake adapter (never wired into a deployed configuration) and gateway tests: a forced-failure test, a timeout test, a call-association test (a call without a task or named routine association is refused), and accounting tests proving a `model.usage` entry exists for success, provider-error, and malformed-output calls
   - _Requirements: 10.1, 10.2, 10.3, 10.4 — Property 10_
 
-- [ ] 6. Checker and Approval Gate
+- [~] 6. Checker and Approval Gate
   - [ ] 6.1 Implement the deterministic Checker framework: a per-pack rule registry; rules are pure functions over source records (required fields, number equality, recipient match); a failed check writes the specific anomaly to the task and returns it to Working
   - [ ] 6.2 Implement the model-review step (via the gateway) that runs after deterministic checks pass and can only flag, never override a deterministic failure
   - [ ] 6.3 Implement the approval-action interface and test handlers first (the real pack handlers land with groups 12 and 13): approve/reject with decider and timestamp audited. Approval is bound to the exact immutable revision of the draft that passed the Checker: on approval, that revision executes — atomically and idempotently, so approving twice executes once, and any change to the draft invalidates the earlier check and approval. Gated actions built in this slice: booking confirmation, goods-receipt recording, and follow-up sendable marking. Enforce that payment states change only via deterministic rules plus an explicit owner approval event — no model path exists
