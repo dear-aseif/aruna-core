@@ -319,6 +319,23 @@
         "chatSessionId": "sess_2e092b2e-87f1-4771-9f85-df94a5742fef",
         "timestamp": 1795168573495
       }
+    ],
+    "6.3 Implement the approval-action interface and test handlers first (the real pack handlers land with groups 12 and 13): approve/reject with decider and timestamp audited. Approval is bound to the exact immutable revision of the draft that passed the Checker: on approval, that revision executes — atomically and idempotently, so approving twice executes once, and any change to the draft invalidates the earlier check and approval. Gated actions built in this slice: booking confirmation, goods-receipt recording, and follow-up sendable marking. Enforce that payment states change only via deterministic rules plus an explicit owner approval event — no model path exists": [
+      {
+        "executionId": "2b01b87c-a60a-4c4e-aa64-d80ba0a1a745",
+        "chatSessionId": "sess_b8a21ba1-4650-4e7b-9825-69954e6ecec7",
+        "timestamp": 1795169321578
+      },
+      {
+        "executionId": "fa60f2ff-5a8f-4086-b1af-e65c02f464df",
+        "chatSessionId": "sess_b9f2d18e-1ebc-41a0-ba17-7635ad43a241",
+        "timestamp": 1795169371823
+      },
+      {
+        "executionId": "fa60f2ff-5a8f-4086-b1af-e65c02f464df",
+        "chatSessionId": "sess_b9f2d18e-1ebc-41a0-ba17-7635ad43a241",
+        "timestamp": 1795170297206
+      }
     ]
   }
 }

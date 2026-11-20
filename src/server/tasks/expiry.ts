@@ -41,7 +41,7 @@ export class NotAwaitingApprovalError extends Error {
 export type ExpiryActionCanceller = (tx: TenantTx, task: TaskRow) => Promise<number | void>;
 const cancellers: ExpiryActionCanceller[] = [];
 export function registerExpiryActionCanceller(fn: ExpiryActionCanceller): void {
-  cancellers.push(fn);
+  if (!cancellers.includes(fn)) cancellers.push(fn); // idempotent: the same canceller never runs twice
 }
 export function clearExpiryActionCancellers(): void {
   cancellers.length = 0;
