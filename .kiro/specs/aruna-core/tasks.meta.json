@@ -437,6 +437,55 @@
         "executionId": "e0e622c1-62fe-423a-a442-c6612caec936",
         "chatSessionId": "sess_e3b59610-193e-4db7-87cd-a67db321e7b5",
         "timestamp": 1795241592091
+      },
+      {
+        "executionId": "2dc1f368-9255-421e-b161-67f727766ec2",
+        "chatSessionId": "sess_e3b59610-193e-4db7-87cd-a67db321e7b5",
+        "timestamp": 1795242403378
+      },
+      {
+        "executionId": "2dc1f368-9255-421e-b161-67f727766ec2",
+        "chatSessionId": "sess_e3b59610-193e-4db7-87cd-a67db321e7b5",
+        "timestamp": 1795242625787
+      }
+    ],
+    "8.3 Implement Maestro live-data answers: status questions are answered through typed server query functions over live tasks and audit entries": [
+      {
+        "executionId": "3c25616a-7dad-4ba3-99a8-25b4090435fb",
+        "chatSessionId": "sess_be075c34-fd67-4f55-a5f5-e336ffe2384e",
+        "timestamp": 1795243707336
+      },
+      {
+        "executionId": "181682c2-abf0-4bfc-9691-226568b92161",
+        "chatSessionId": "sess_971fe73a-583a-46b2-9a5a-825fa1054a33",
+        "timestamp": 1795243720149
+      },
+      {
+        "executionId": "f672a448-65b1-48c0-8462-96d108deda50",
+        "chatSessionId": "sess_be075c34-fd67-4f55-a5f5-e336ffe2384e",
+        "timestamp": 1795243750862
+      },
+      {
+        "executionId": "f672a448-65b1-48c0-8462-96d108deda50",
+        "chatSessionId": "sess_be075c34-fd67-4f55-a5f5-e336ffe2384e",
+        "timestamp": 1795244554485
+      },
+      {
+        "executionId": "5e818626-1fcc-4287-96c3-d3cc2dd2e843",
+        "chatSessionId": "sess_971fe73a-583a-46b2-9a5a-825fa1054a33",
+        "timestamp": 1795244571489
+      },
+      {
+        "executionId": "5e818626-1fcc-4287-96c3-d3cc2dd2e843",
+        "chatSessionId": "sess_971fe73a-583a-46b2-9a5a-825fa1054a33",
+        "timestamp": 1795244859948
+      }
+    ],
+    "8. Agents and chat": [
+      {
+        "executionId": "f672a448-65b1-48c0-8462-96d108deda50",
+        "chatSessionId": "sess_be075c34-fd67-4f55-a5f5-e336ffe2384e",
+        "timestamp": 1795244554542
       }
     ]
   }

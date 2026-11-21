@@ -87,6 +87,14 @@ export async function listTasksTx(tx: TenantTx, opts: ListTasksOptions = {}): Pr
     ? tx.query<TaskRow>("select * from tasks where status = any($1::text[]) order by created_at desc, id limit $2", [statuses, limit])
     : tx.query<TaskRow>("select * from tasks order by created_at desc, id limit $1", [limit]);
 }
+/** Exact task counts per status for the caller's tenant (every status present, zero when none). Added for 8.3. */
+export async function countTasksByStatusTx(tx: TenantTx): Promise<Record<TaskStatus, number>> {
+  const rows = await tx.query<{ status: TaskStatus; n: number }>("select status, count(*)::int as n from tasks group by status");
+  const counts = Object.fromEntries(TASK_STATUSES.map((s) => [s, 0])) as Record<TaskStatus, number>;
+  for (const r of rows) counts[r.status] = r.n;
+  return counts;
+}
+
 /** One task with its audit history. Another tenant's task, or an unknown id, is NotFoundError (not audited). */
 export async function getTaskDetailTx(tx: TenantTx, taskId: string): Promise<TaskDetail> {
   if (typeof taskId !== "string" || !UUID.test(taskId)) throw new NotFoundError("tasks");

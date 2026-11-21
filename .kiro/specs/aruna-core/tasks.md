@@ -62,10 +62,10 @@ All build sessions run under one Kiro sign-in (Google sign-in, 4,000 Kiroween cr
 - [x] 7. Checkpoint — safety core verified
   - [x] 7.1 Ensure all tests pass; run the Tier-3-style abuse cases by hand (fake payment claim, discount injection, cross-tenant reference) and confirm the pipeline refuses or escalates each one. Ask the founder if questions arise.
 
-- [ ] 8. Agents and chat
+- [x] 8. Agents and chat
   - [x] 8.1 Create the `threads` and `messages` migrations (tenant-scoped, RLS) and implement threads and messages: one Maestro thread and one thread per active specialist per tenant; the assistant display name comes from settings and a rename takes effect immediately in chat, briefings, and the workspace
   - [x] 8.2 Implement the agent runtime: a command in any thread creates or updates a task and is audited; agent outputs are schema-validated structured drafts attached to their task
-  - [ ] 8.3 Implement Maestro live-data answers: status questions are answered through typed server query functions over live tasks and audit entries
+  - [x] 8.3 Implement Maestro live-data answers: status questions are answered through typed server query functions over live tasks and audit entries
   - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5_
 
 - [ ] 9. Owner workspace UI
