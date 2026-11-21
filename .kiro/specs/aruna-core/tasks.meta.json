@@ -385,6 +385,25 @@
         "chatSessionId": "sess_f01d86d7-903e-4cf2-bcfa-de4af12db24b",
         "timestamp": 1795172474320
       }
+    ],
+    "7.1 Ensure all tests pass; run the Tier-3-style abuse cases by hand (fake payment claim, discount injection, cross-tenant reference) and confirm the pipeline refuses or escalates each one. Ask the founder if questions arise.": [
+      {
+        "executionId": "f16dbd6f-0d1c-4ec8-ba0a-545fc9bcda76",
+        "chatSessionId": "sess_4b0e271b-62e3-4647-94d4-b72cac7448f0",
+        "timestamp": 1795235326151
+      },
+      {
+        "executionId": "f16dbd6f-0d1c-4ec8-ba0a-545fc9bcda76",
+        "chatSessionId": "sess_4b0e271b-62e3-4647-94d4-b72cac7448f0",
+        "timestamp": 1795235913584
+      }
+    ],
+    "7. Checkpoint — safety core verified": [
+      {
+        "executionId": "f16dbd6f-0d1c-4ec8-ba0a-545fc9bcda76",
+        "chatSessionId": "sess_4b0e271b-62e3-4647-94d4-b72cac7448f0",
+        "timestamp": 1795235913634
+      }
     ]
   }
 }

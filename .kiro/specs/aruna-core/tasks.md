@@ -59,8 +59,8 @@ All build sessions run under one Kiro sign-in (Google sign-in, 4,000 Kiroween cr
   - [x] 6.4 Write Checker tests (each rule passes/fails on crafted records), a Property 2 bypass test (attempting to execute a gated action through a direct server path that skips the Checker and Approval Gate is refused), an execution-binding test (double approval executes once; a draft changed after checking cannot be approved on the old check), and a payment-authority test proving the deterministic rule is what authorizes a payment-state change: a model output accompanied by an approval event still cannot change a payment state when the deterministic rule fails, and no model output can precede a payment-state change without an approval event
   - _Requirements: 5.1, 5.2, 5.3, 5.5, 5.6, C3 — Properties 2, 3_
 
-- [ ] 7. Checkpoint — safety core verified
-  - [ ] 7.1 Ensure all tests pass; run the Tier-3-style abuse cases by hand (fake payment claim, discount injection, cross-tenant reference) and confirm the pipeline refuses or escalates each one. Ask the founder if questions arise.
+- [x] 7. Checkpoint — safety core verified
+  - [x] 7.1 Ensure all tests pass; run the Tier-3-style abuse cases by hand (fake payment claim, discount injection, cross-tenant reference) and confirm the pipeline refuses or escalates each one. Ask the founder if questions arise.
 
 - [ ] 8. Agents and chat
   - [ ] 8.1 Create the `threads` and `messages` migrations (tenant-scoped, RLS) and implement threads and messages: one Maestro thread and one thread per active specialist per tenant; the assistant display name comes from settings and a rename takes effect immediately in chat, briefings, and the workspace
