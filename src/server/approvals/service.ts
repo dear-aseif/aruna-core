@@ -155,12 +155,32 @@ export async function approveTask(caller: Caller, taskId: string, expectedRevisi
     if (e instanceof NotAwaitingApprovalError && e.status === "done") {
       const replay = await withTenant(caller, async (tx) => {
         const history = await getTaskHistory(tx, taskId);
-        const prior = history.find((h) => h.type === AUDIT_TYPES.approvalDecision && h.payload.decision === "approve");
+        const prior = history.find((h) => h.type === AUDIT_TYPES.approvalDecision && h.payload.decision === "approve" && h.payload.outcome !== "blocked");
         if (!prior) return null;
         const task = await tx.getById<TaskRow>("tasks", taskId);
         return { taskId, decision: "approved" as const, revision: Number(prior.payload.revision), executed: false, task } satisfies ApprovalResult;
       });
       if (replay) return replay;
+    }
+    if (e instanceof PaymentRuleFailedError) {
+      // Gate ruling 7.1: the refusal rolled back with the execution transaction; record it in its
+      // own short transaction under the task's tenant (same pattern as the DAL cross-tenant refusal).
+      await withTenant(caller, async (tx) => {
+        const task = await tx.maybeOne<TaskRow>("select * from tasks where id = $1", [taskId]);
+        await recordApprovalDecision(
+          tx,
+          taskId,
+          {
+            decision: "approve",
+            outcome: "blocked",
+            reason: e.reason,
+            revision: task?.payload_revision ?? expectedRevision,
+            action_type: task ? (readPath(task.payload, "action_type") ?? null) : null,
+            decided_by: tx.caller.actorId,
+            decided_at: await decidedAt(tx),
+          },
+        );
+      });
     }
     throw e;
   }

@@ -250,6 +250,33 @@ describe("payment authority (C3)", () => {
     expect((await row(id)).status).toBe("pending_approval");
   });
 
+  it("gate 7.1: a blocked payment approval leaves exactly one blocked decision entry; a later valid approval adds none; two blocked attempts record two", async () => {
+    const { id, recordId } = await pending(T.paymentMarkPaid, { amount_paid: 1 }, { state: "invoiced", amountDue: 150000, paymentState: "unpaid" });
+    await expect(approveTask(OWNER, id, 1)).rejects.toBeInstanceOf(PaymentRuleFailedError);
+    let d = await decisions(id);
+    expect(d).toHaveLength(1);
+    expect(d[0]).toMatchObject({ actor: "owner", actorId: OWNER.actorId });
+    expect(d[0].payload).toMatchObject({ outcome: "blocked", decision: "approve", revision: 1, decided_by: OWNER.actorId });
+    expect(String(d[0].payload.reason).length).toBeGreaterThan(0);
+    expect((await row(id)).status).toBe("pending_approval");
+    expect(store.get(recordId)!.paymentState).toBe("unpaid");
+    expect(store.effectsFor(id)).toHaveLength(0);
+
+    await expect(approveTask(OWNER, id, 1)).rejects.toBeInstanceOf(PaymentRuleFailedError);
+    d = await decisions(id);
+    expect(d.filter((e) => e.payload.outcome === "blocked")).toHaveLength(2);
+
+    // The owner's payment evidence is corrected; a valid approval now succeeds and adds no blocked entry.
+    store.put(recordId, { state: "invoiced", amountDue: 150000, paymentState: "unpaid" });
+    await withTenant(AGENT, (tx) => reviseDraft(tx, id, { action_type: T.paymentMarkPaid, fields: { record_id: recordId, amount_paid: 150000 } }));
+    await withTenant(AGENT, (tx) => checkTask(tx, id, { packId: PACK }));
+    expect((await approveTask(OWNER, id, 2)).executed).toBe(true);
+    d = await decisions(id);
+    expect(d.filter((e) => e.payload.outcome === "blocked")).toHaveLength(2);
+    expect(d).toHaveLength(3);
+    expect(store.get(recordId)!.paymentState).toBe("paid");
+  });
+
   it("no non-owner actor can change payment state", async () => {
     const { id, recordId } = await pending(T.paymentMarkPaid, { amount_paid: 150000 }, { state: "invoiced", amountDue: 150000, paymentState: "unpaid" });
     await expect(approveTask(AGENT, id, 1)).rejects.toBeInstanceOf(ApprovalNotPermittedError);

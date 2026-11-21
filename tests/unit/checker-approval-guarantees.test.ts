@@ -200,7 +200,10 @@ describe("payment authority (Property 3, C3)", () => {
     expect(store.get(recordId)!.paymentState).toBe("unpaid");
     expect(store.effectsFor(id)).toHaveLength(0);
     expect((await row(id)).status).toBe("pending_approval");
-    expect((await history(id)).filter((e) => e.type === "approval.decision")).toHaveLength(0);
+    // Gate ruling 7.1: the refusal itself is audited as a blocked decision; nothing else is recorded.
+    const decisions = (await history(id)).filter((e) => e.type === "approval.decision");
+    expect(decisions).toHaveLength(1);
+    expect(decisions[0].payload.outcome).toBe("blocked");
   });
 
   it("no model output precedes a payment-state change without an approval event; the change follows the approval in the audit log", async () => {
