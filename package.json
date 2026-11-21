@@ -14,7 +14,8 @@
     "db:migrate": "tsx --env-file=.env.local scripts/migrate.ts",
     "db:check": "tsx --env-file=.env.local scripts/db-check.ts",
     "db:seed": "tsx --env-file=.env.local scripts/seed.ts",
-    "tasks:sweep": "tsx --env-file=.env.local scripts/expire-approvals.ts"
+    "tasks:sweep": "tsx --env-file=.env.local scripts/expire-approvals.ts",
+    "tasks:recover": "tsx --env-file=.env.local scripts/recover-stale-attempts.ts"
   },
   "dependencies": {
     "@aws-sdk/client-bedrock-runtime": "^3.1173.0",

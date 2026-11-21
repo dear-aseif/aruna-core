@@ -426,6 +426,18 @@
         "chatSessionId": "sess_6af0559b-4d55-4e2c-9a53-19779d102ec7",
         "timestamp": 1795239227385
       }
+    ],
+    "8.2 Implement the agent runtime: a command in any thread creates or updates a task and is audited; agent outputs are schema-validated structured drafts attached to their task": [
+      {
+        "executionId": "e0e622c1-62fe-423a-a442-c6612caec936",
+        "chatSessionId": "sess_e3b59610-193e-4db7-87cd-a67db321e7b5",
+        "timestamp": 1795240488919
+      },
+      {
+        "executionId": "e0e622c1-62fe-423a-a442-c6612caec936",
+        "chatSessionId": "sess_e3b59610-193e-4db7-87cd-a67db321e7b5",
+        "timestamp": 1795241592091
+      }
     ]
   }
 }

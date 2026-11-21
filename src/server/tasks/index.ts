@@ -12,7 +12,15 @@ export {
   UncheckedRevisionError,
   transitionTask,
   retryTask,
+  recoverStaleAttempt,
+  StaleRecoveryNotPermittedError,
+  AttemptNotStaleError,
+  STALE_RECOVERY_REASON,
+  STALE_EXHAUSTED_REASON,
+  DEFAULT_STALE_ATTEMPT_SECONDS,
+  MAX_STALE_RECOVERIES,
 } from "./state-machine";
 export type { TaskStatus, TaskRow, TransitionOptions } from "./state-machine";
 export * from "./expiry";
 export * from "./operations";
+export * from "./recovery";

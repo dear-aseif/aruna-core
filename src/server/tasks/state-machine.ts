@@ -217,3 +217,70 @@ export async function returnToReviewOnRevision(tx: TenantTx, taskId: string): Pr
   await tx.audit(TASK_AUDIT_TYPES.transition, { from: "pending_approval", to: "in_review", reason: "draft_revised" }, taskId);
   return updated;
 }
+
+/**
+ * Stale-attempt recovery (gate ruling 4.2, amendment #14): working -> queued. Like `retryTask`, this
+ * edge is deliberately NOT in TRANSITIONS: the general `transitionTask` refuses it, and only this
+ * function can take it. It is callable only by the system actor, only for a task that is Working and
+ * whose attempt is stale (no change for `staleAfterSeconds`, judged by DATABASE time under the row
+ * lock). Each recovery is audited (`task.transition`, reason `stale_attempt_recovered`). Once a task
+ * has been recovered MAX_STALE_RECOVERIES times, the next stale attempt marks it Failed instead.
+ */
+export const STALE_RECOVERY_REASON = "stale_attempt_recovered";
+export const STALE_EXHAUSTED_REASON = "stale_attempt_exhausted";
+/** Policy values: the spec names the mechanism but not the numbers (flagged in the task 8.2 report). */
+export const DEFAULT_STALE_ATTEMPT_SECONDS = 300;
+export const MAX_STALE_RECOVERIES = 2;
+
+/** Only the system actor may recover a stale attempt. Nothing was changed or audited. */
+export class StaleRecoveryNotPermittedError extends Error {
+  constructor(readonly actor: string) {
+    super("only the system can recover a stale attempt");
+    this.name = "StaleRecoveryNotPermittedError";
+  }
+}
+
+/** The Working task's attempt is not stale yet. Nothing was changed or audited. */
+export class AttemptNotStaleError extends Error {
+  constructor(readonly taskId: string) {
+    super("the task's attempt is not stale");
+    this.name = "AttemptNotStaleError";
+  }
+}
+
+export async function recoverStaleAttempt(
+  tx: TenantTx,
+  taskId: string,
+  opts: { staleAfterSeconds?: number } = {},
+): Promise<TaskRow> {
+  if (tx.caller.actor !== "system") throw new StaleRecoveryNotPermittedError(tx.caller.actor);
+  const staleAfter = opts.staleAfterSeconds ?? DEFAULT_STALE_ATTEMPT_SECONDS;
+  if (!Number.isFinite(staleAfter) || staleAfter < 0) throw new Error("staleAfterSeconds must be a non-negative number");
+  const row = await tx.maybeOne<TaskRow & { stale: boolean }>(
+    "select *, (updated_at <= clock_timestamp() - make_interval(secs => $2::float8)) as stale from tasks where id = $1 for update",
+    [taskId, staleAfter],
+  );
+  if (!row) throw new NotFoundError("tasks");
+  if (row.status !== "working") throw new IllegalTransitionError(row.status, "queued");
+  if (!row.stale) throw new AttemptNotStaleError(taskId);
+  const prior = (
+    await tx.query<{ n: string }>(
+      "select count(*) as n from audit_log where task_id = $1 and type = $2 and payload->>'reason' = $3",
+      [taskId, TASK_AUDIT_TYPES.transition, STALE_RECOVERY_REASON],
+    )
+  )[0];
+  const recoveries = Number(prior?.n ?? 0);
+  if (recoveries >= MAX_STALE_RECOVERIES) {
+    const error = `execution attempt went stale and the recovery bound (${MAX_STALE_RECOVERIES}) was exhausted`;
+    const failed = await writeStatus(tx, taskId, "failed", error);
+    await tx.audit(TASK_AUDIT_TYPES.transition, { from: "working", to: "failed", error, reason: STALE_EXHAUSTED_REASON, recoveries }, taskId);
+    return failed;
+  }
+  const queued = await writeStatus(tx, taskId, "queued", null);
+  await tx.audit(
+    TASK_AUDIT_TYPES.transition,
+    { from: "working", to: "queued", reason: STALE_RECOVERY_REASON, recoveries: recoveries + 1, max_recoveries: MAX_STALE_RECOVERIES },
+    taskId,
+  );
+  return queued;
+}
