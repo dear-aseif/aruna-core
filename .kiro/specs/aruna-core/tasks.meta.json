@@ -414,6 +414,18 @@
         "chatSessionId": "sess_4b0e271b-62e3-4647-94d4-b72cac7448f0",
         "timestamp": 1795235913634
       }
+    ],
+    "8.1 Create the `threads` and `messages` migrations (tenant-scoped, RLS) and implement threads and messages: one Maestro thread and one thread per active specialist per tenant; the assistant display name comes from settings and a rename takes effect immediately in chat, briefings, and the workspace": [
+      {
+        "executionId": "01dbca48-a945-48ce-baa3-8ea6c8296db6",
+        "chatSessionId": "sess_6af0559b-4d55-4e2c-9a53-19779d102ec7",
+        "timestamp": 1795238725921
+      },
+      {
+        "executionId": "01dbca48-a945-48ce-baa3-8ea6c8296db6",
+        "chatSessionId": "sess_6af0559b-4d55-4e2c-9a53-19779d102ec7",
+        "timestamp": 1795239227385
+      }
     ]
   }
 }
