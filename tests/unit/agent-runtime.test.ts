@@ -124,12 +124,30 @@ describe("execution", () => {
     expect(actions).toEqual([["agent", "test_scribe", "attempt_started"], ["agent", "test_scribe", "draft_attached"]]);
     expect(h.find((e) => e.type === "checker.result")!.payload).toMatchObject({ outcome: "pass", revision: 2, route: "pending_approval" });
   });
-  it("a deterministic failure routes the draft back to Working with the anomaly (never past the Checker)", async () => {
+  it("a deterministic failure is reworked inside the same request until the bound, then Failed (never past the Checker)", async () => {
     const fake = createFakeAdapter(draft(GATED, { qty: 3 }));
     const r = await submitCommand(owner(A), gw(fake), { threadId: threadsA.test_scribe, body: "Draft without an item" }, opts);
-    expect(r.execution).toMatchObject({ status: "working", draftAttached: true });
-    expect((await row(A, r.task.id)).anomaly).toMatch(/item/);
-    expect(fake.calls).toHaveLength(1); // the model review is never called after a deterministic failure
+    expect(r.execution).toMatchObject({ status: "failed", draftAttached: true });
+    const task = await row(A, r.task.id);
+    expect(task.error).toMatch(/rework exhausted/);
+    expect(task.payload_revision).toBe(5); // 4 attempts: the first plus 3 reworks
+    expect(fake.calls).toHaveLength(4); // the model review is never called after a deterministic failure
+  });
+  it("a draft that fails the check once and then passes reaches its routed end state within ONE command", async () => {
+    const fake = createFakeAdapter(draft(GATED, { qty: 3 }), draft(GATED, { item: "Facial", qty: 3 }), REVIEW_OK);
+    const r = await submitCommand(owner(A), gw(fake), { threadId: threadsA.test_scribe, body: "Confirm the Facial" }, opts);
+    expect(r.execution).toMatchObject({ status: "pending_approval", draftAttached: true });
+    expect(r.task.payload_revision).toBe(3);
+    expect((await row(A, r.task.id)).anomaly).toBeNull();
+    // the second attempt received the Checker anomaly and the prior draft as input
+    const second = JSON.stringify(fake.calls[1].messages);
+    expect(second).toMatch(/checker_anomaly/);
+    expect(second).toMatch(/previous_draft/);
+    expect(second).toMatch(/item/);
+    expect(fake.calls[0].messages && JSON.stringify(fake.calls[0].messages)).not.toMatch(/previous_draft/);
+    const h = await history(A, r.task.id);
+    expect(h.filter((e) => e.type === "agent.action" && e.payload.action === "attempt_started")).toHaveLength(2);
+    expect(h.filter((e) => e.type === "checker.result").map((e) => e.payload.route)).toEqual(["working", "pending_approval"]);
   });
   it("malformed output fails the task and fabricates nothing", async () => {
     for (const behavior of [
@@ -169,6 +187,41 @@ describe("execution", () => {
   it("an attempt starts only from Queued", async () => {
     const id = await workingTask(A);
     await expect(executeTask(A.id, gw(createFakeAdapter()), id, opts)).rejects.toBeInstanceOf(NotQueuedError);
+  });
+});
+describe("commands on existing tasks", () => {
+  const count = (t: { id: string }) => withTenant(owner(t), async (tx) => (await tx.query("select id from tasks")).length);
+  it("a correction on a Working task produces a new revision of that task and no new task row", async () => {
+    const id = await workingTask(A);
+    const before = await count(A);
+    const fake = createFakeAdapter(draft(OPEN, { item: "Facial" }), REVIEW_OK);
+    const r = await submitCommand(owner(A), gw(fake), { threadId: threadsA.test_scribe, body: "Make it a Facial", taskId: id }, opts);
+    expect(r.task.id).toBe(id);
+    expect(r.execution).toMatchObject({ status: "done", draftAttached: true });
+    expect(r.task.payload_revision).toBe(2);
+    expect(await count(A)).toBe(before);
+    const h = await history(A, id);
+    expect(h.find((e) => e.type === "command.received")!.payload).toMatchObject({ command: "Make it a Facial" });
+    const msgs = await withTenant(owner(A), (tx) => listMessagesTx(tx, threadsA.test_scribe));
+    expect(msgs.find((m) => m.id === r.messageId)).toMatchObject({ taskId: id });
+    expect(JSON.stringify(fake.calls[0].messages)).toMatch(/Make it a Facial/);
+  });
+  it("a command referencing a terminal task creates a new task", async () => {
+    const fake = createFakeAdapter(draft(OPEN, { item: "Facial" }), REVIEW_OK);
+    const first = await submitCommand(owner(A), gw(fake), { threadId: threadsA.test_scribe, body: "First" }, opts);
+    expect(first.task.status).toBe("done");
+    const again = await submitCommand(owner(A), gw(fake), { threadId: threadsA.test_scribe, body: "Again", taskId: first.task.id }, opts);
+    expect(again.task.id).not.toBe(first.task.id);
+    expect((await row(A, first.task.id)).payload_revision).toBe(2);
+  });
+  it("another tenant's task cannot be referenced or affected", async () => {
+    const id = await workingTask(A);
+    const fake = createFakeAdapter(draft(OPEN, { item: "x" }), REVIEW_OK);
+    const before = await count(B);
+    await expect(submitCommand(owner(B), gw(fake), { threadId: threadsB.test_scribe, body: "Hijack", taskId: id }, opts)).rejects.toBeInstanceOf(NotFoundError);
+    expect(await count(B)).toBe(before);
+    expect((await row(A, id)).payload_revision).toBe(1);
+    expect(fake.calls).toHaveLength(0);
   });
 });
 describe("stale-attempt recovery", () => {

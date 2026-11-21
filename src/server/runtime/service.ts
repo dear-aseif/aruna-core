@@ -4,10 +4,10 @@ import { NotFoundError } from "../dal/errors";
 import { recordAgentAction } from "../audit";
 import { GatewayError, type ModelGateway } from "../gateway";
 import { reviseDraft } from "../approvals";
-import { NoCheckerRulesError, checkTaskWithReview, type CheckOptions, type ReviewedCheckOutcome } from "../checker";
+import { MAX_REWORK_RETURNS, NoCheckerRulesError, checkTaskWithReview, type CheckOptions, type ReviewedCheckOutcome } from "../checker";
 import { createTaskTx, MAX_TITLE_LENGTH, transitionTask, type TaskRow, type TaskOrigin } from "../tasks";
 import { InvalidMessageError, MAX_MESSAGE_LENGTH, postMessageTx, type MessageRow, type ThreadRow } from "../threads";
-import { OUTPUT_CONTRACT, getAgentExecutor } from "./executors";
+import { OUTPUT_CONTRACT, getAgentExecutor, type AgentExecutor } from "./executors";
 /**
  * Agent runtime (task 8.2, design §2.3 Executor / §2.6 Commands, R4.2, amendment #14).
  *
@@ -88,7 +88,7 @@ async function failIfOpen(caller: Caller, taskId: string, error: string, reason:
 export async function submitCommand(
   caller: Caller,
   gateway: ModelGateway,
-  input: { threadId: string; body: string },
+  input: { threadId: string; body: string; taskId?: string | null },
   opts: CheckOptions = {},
 ): Promise<CommandResult> {
   if (caller.actor !== "owner") throw new CommandNotPermittedError(caller.actor);
@@ -99,36 +99,63 @@ export async function submitCommand(
     if (typeof input.threadId !== "string") throw new NotFoundError("threads");
     const thread = await tx.getById<ThreadRow>("threads", input.threadId); // another tenant's thread is invisible
     const origin: TaskOrigin = thread.kind === "maestro" ? "maestro" : "direct";
-    const task = await createTaskTx(tx, { title: commandTitle(body), origin, agent: thread.agent });
+    // A reference to an existing Queued/Working task of this tenant continues THAT task (another
+    // tenant's task is invisible: NotFoundError, nothing written). Any other status starts a new task.
+    let existing: TaskRow | null = null;
+    if (input.taskId != null) {
+      if (typeof input.taskId !== "string") throw new NotFoundError("tasks");
+      const ref = await tx.getById<TaskRow>("tasks", input.taskId);
+      if (ref.status === "queued" || ref.status === "working") existing = ref;
+    }
+    const task = existing ?? (await createTaskTx(tx, { title: commandTitle(body), origin, agent: thread.agent }));
     const message: MessageRow = await postMessageTx(tx, { threadId: thread.id, sender: "owner", body, taskId: task.id });
     await tx.audit(COMMAND_AUDIT_TYPE, { thread_id: thread.id, thread_agent: thread.agent, origin, message_id: message.id, command: body }, task.id);
-    return { task, messageId: message.id, threadId: thread.id };
+    return { task, messageId: message.id, threadId: thread.id, command: body, continued: existing !== null };
   });
-  const execution = await executeTask(caller.tenantId, gateway, created.task.id, opts);
+  const execution = await runTask(caller.tenantId, gateway, created.task.id, opts, created.continued ? { command: created.command } : {});
   return { threadId: created.threadId, messageId: created.messageId, task: execution.task, execution };
 }
 /** Session-token form of `submitCommand`. */
-export async function sendCommand(token: unknown, gateway: ModelGateway, input: { threadId: string; body: string }, opts: CheckOptions = {}): Promise<CommandResult> {
+export async function sendCommand(token: unknown, gateway: ModelGateway, input: { threadId: string; body: string; taskId?: string | null }, opts: CheckOptions = {}): Promise<CommandResult> {
   const caller: Caller = await withCaller(token, async (tx) => tx.caller);
   return submitCommand(caller, gateway, input, opts);
 }
+/** Hard cap on attempts in one request. The rework bound (6.1) ends the loop first; this only stops a defect. */
+export const MAX_EXECUTOR_ITERATIONS = MAX_REWORK_RETURNS + 4;
+
 /**
- * Run one attempt for a Queued task. Server-trusted: the tenant comes from the caller's session
+ * Run one attempt for a Queued task, then keep reworking inside this request until the Checker
+ * routes anywhere other than Working. Server-trusted: the tenant comes from the caller's session
  * or the server routine, and the work is attributed to the task's agent. Also the entry point
  * for a task that stale-attempt recovery returned to Queued.
  */
-export async function executeTask(tenantId: string, gateway: ModelGateway, taskId: string, opts: CheckOptions = {}): Promise<ExecutionResult> {
+export function executeTask(tenantId: string, gateway: ModelGateway, taskId: string, opts: CheckOptions = {}): Promise<ExecutionResult> {
+  return runTask(tenantId, gateway, taskId, opts, {});
+}
+
+interface AttemptInput {
+  command: string;
+  title: string;
+  /** The prior draft and the Checker's anomaly: present on a rework or a correction. */
+  previousDraft?: unknown;
+  anomaly?: string | null;
+}
+
+async function runTask(tenantId: string, gateway: ModelGateway, taskId: string, opts: CheckOptions, from: { command?: string }): Promise<ExecutionResult> {
   // Read the agent under a system caller first, so the attempt itself is attributed to the agent.
   const probe = await readTaskRow({ tenantId, actor: "system", actorId: "agent-runtime" }, taskId);
   const caller = agentCaller(tenantId, probe.agent);
   const executor = getAgentExecutor(probe.agent);
-  // Attempt start: Queued -> Working, audited with the attempt record.
+  const correction = from.command !== undefined;
+  // Attempt start: Queued -> Working (a correction may also start on a Working task), audited.
   const started = await withTenant(caller, async (tx) => {
     const task = await tx.maybeOne<TaskRow>("select * from tasks where id = $1 for update", [taskId]);
     if (!task) throw new NotFoundError("tasks");
-    if (task.status !== "queued") throw new NotQueuedError(taskId, task.status);
-    const working = await transitionTask(tx, taskId, "working", { reason: "attempt_started" });
-    await recordAgentAction(tx, taskId, "attempt_started", { agent: task.agent, has_executor: executor !== null });
+    if (task.status !== "queued" && !(correction && task.status === "working")) throw new NotQueuedError(taskId, task.status);
+    let working: TaskRow;
+    if (task.status === "queued") working = await transitionTask(tx, taskId, "working", { reason: "attempt_started" });
+    else working = (await tx.maybeOne<TaskRow>("update tasks set updated_at = now() where id = $1 returning *", [taskId]))!; // takes the task over from any older attempt
+    await recordAgentAction(tx, taskId, "attempt_started", { agent: task.agent, has_executor: executor !== null, ...(correction ? { trigger: "command" } : {}) });
     if (!executor) {
       const error = `no executor is registered for agent "${task.agent}"`;
       const failed = await transitionTask(tx, taskId, "failed", { error, reason: "no_executor" });
@@ -136,12 +163,47 @@ export async function executeTask(tenantId: string, gateway: ModelGateway, taskI
       return { failed };
     }
     const cmd = await tx.maybeOne<{ body: string }>("select body from messages where task_id = $1 and sender = 'owner' order by seq limit 1", [taskId]);
-    return { working, command: cmd?.body ?? task.title, title: task.title };
+    const hasDraft = task.payload_revision > 1 || Object.keys(task.payload ?? {}).length > 0;
+    return {
+      working,
+      input: {
+        command: from.command ?? cmd?.body ?? task.title,
+        title: task.title,
+        ...(correction && hasDraft ? { previousDraft: task.payload, anomaly: task.anomaly } : {}),
+      } as AttemptInput,
+    };
   });
   if ("failed" in started && started.failed) {
     return { taskId, status: "failed", draftAttached: false, error: started.failed.error ?? undefined, task: started.failed };
   }
-  const { working, command, title } = started as { working: TaskRow; command: string; title: string };
+  let { working, input } = started as { working: TaskRow; input: AttemptInput };
+  for (let i = 1; ; i++) {
+    const result = await attemptOnce(caller, gateway, executor!, working, input, opts);
+    // The loop turns only when the Checker sent the draft back to Working.
+    if (result.superseded || result.check?.route !== "working") return result;
+    if (i >= MAX_EXECUTOR_ITERATIONS) {
+      const error = `executor stopped after ${MAX_EXECUTOR_ITERATIONS} attempts in one request`;
+      await failIfOpen(caller, taskId, error, "executor_iteration_cap");
+      const task = await readTaskRow(caller, taskId);
+      return { ...result, status: task.status, error: task.error ?? error, task };
+    }
+    const next = await withTenant(caller, async (tx) => {
+      const task = await tx.maybeOne<TaskRow>("select * from tasks where id = $1 for update", [taskId]);
+      if (!task || task.status !== "working") return null;
+      const touched = (await tx.maybeOne<TaskRow>("update tasks set updated_at = now() where id = $1 returning *", [taskId]))!;
+      await recordAgentAction(tx, taskId, "attempt_started", { agent: task.agent, has_executor: true, trigger: "rework", rework: i });
+      return { working: touched, previousDraft: task.payload, anomaly: task.anomaly };
+    });
+    if (!next) return result;
+    working = next.working;
+    input = { command: input.command, title: input.title, previousDraft: next.previousDraft, anomaly: next.anomaly };
+  }
+}
+
+/** One model call, draft attachment and Checker pass for a task that is Working. */
+async function attemptOnce(caller: Caller, gateway: ModelGateway, executor: AgentExecutor, working: TaskRow, input: AttemptInput, opts: CheckOptions): Promise<ExecutionResult> {
+  const taskId = working.id;
+  const tenantId = caller.tenantId;
   const failed = async (error: string, reason: string, draftAttached = false): Promise<ExecutionResult> => {
     await failIfOpen(caller, taskId, error, reason);
     const task = await readTaskRow(caller, taskId);
@@ -153,8 +215,17 @@ export async function executeTask(tenantId: string, gateway: ModelGateway, taskI
     const result = await gateway.complete({
       tenantId,
       taskId,
-      system: `${executor!.system}\n${OUTPUT_CONTRACT}`,
-      messages: [{ role: "user", content: JSON.stringify({ task_title: title, command }) }],
+      system: `${executor.system}\n${OUTPUT_CONTRACT}`,
+      messages: [
+        {
+          role: "user",
+          content: JSON.stringify({
+            task_title: input.title,
+            command: input.command,
+            ...(input.previousDraft !== undefined ? { previous_draft: input.previousDraft, checker_anomaly: input.anomaly ?? null } : {}),
+          }),
+        },
+      ],
       responseSchema: draftSchema,
     });
     draft = draftSchema.parse(result.parsed); // never trust the seam: re-validate before attaching
