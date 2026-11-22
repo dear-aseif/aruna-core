@@ -1,1 +1,1 @@
-{"mcpServers":{"TalkToFigma":{"args":["cursor-talk-to-figma-mcp"],"command":"bunx"}}}
+{"mcpServers":{"TalkToFigma":{"args":["cursor-talk-to-figma-mcp@latest"],"command":"bunx"}}}
