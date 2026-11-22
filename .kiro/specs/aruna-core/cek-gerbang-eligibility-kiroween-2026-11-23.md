@@ -33,9 +33,11 @@ Tujuan: tidak ada aplikasi selesai yang gugur karena syarat teknis. Checklist in
       = bahan requirements saja, nol kode disalin, semua kode submission dibangun 18 Nov–4 Des 2026.
 - [ ] D3. Log write-up Kiro diisi PER GRUP (bukan direkonstruksi 2 Des): specs, steering, hooks (2 hook aktif),
       custom agents bila ada, MCP, PBT (Property 1–10 di tasks.md), powers bila dipakai.
-      KOREKSI double-check 23 Nov: jembatan Talk-to-Figma Grup 9 digerakkan OpenCode, BUKAN Kiro — ia masuk
-      write-up sebagai transparansi alat desain (preseden Wonder.design), TIDAK BOLEH diklaim sebagai pemakaian
-      MCP oleh Kiro. Klaim MCP/custom agent/powers hanya bila Kiro benar-benar memakainya; bila tidak dipakai,
+      KOREKSI FAKTA 23 Nov (disetujui devina 07:45 WITA): jembatan Talk-to-Figma Grup 9 digerakkan sesi chat
+      Kiro lewat server MCP TalkToFigma (plugin komunitas) yang dikonfigurasi di `.kiro/settings/mcp.json` —
+      masuk write-up sebagai transparansi alat desain (preseden Wonder.design), dan konfigurasi MCP-nya adalah
+      bagian jejak `/.kiro` yang dapat diaudit. Klaim custom agent/powers hanya bila Kiro benar-benar memakainya;
+      bila tidak dipakai,
       tulis apa adanya — write-up yang jujur mengalahkan klaim kosong yang bisa diaudit dari `/.kiro`.
 - [ ] D4. Storyboard video = smoke path task 14.4 persis (2 aplikasi, end-to-end, <3 menit, EN, YouTube publik).
 - [ ] D5. (Opsional, murah) Blog post publik menyebut Kiroween 2026 + post sosial diawali #KiroweenHackathon26 — dikerjakan hanya bila D1–D4 aman.
