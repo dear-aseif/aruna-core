@@ -16,6 +16,8 @@ export default defineConfig({
   webServer: {
     command: `npm run dev -- --port ${port}`,
     url: `http://localhost:${port}`,
+    // Auth.js builds redirects from AUTH_URL; point it at the test server (shell env wins over .env.local).
+    env: { AUTH_URL: `http://localhost:${port}` },
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
   },

@@ -14,9 +14,17 @@ export interface PackSchemaFragment {
   templates: ZodRawShape;
 }
 
+/** A workspace screen the pack contributes to the navigation shell (design §2.12). Content arrives in later tasks. */
+export interface PackScreen {
+  /** URL-safe slug, unique within the pack. */
+  id: string;
+  label: string;
+}
 export interface PackDefinition {
   id: string;
   label: string;
+  /** Screens shown in the shell between Briefings and Settings, in order. */
+  screens: readonly PackScreen[];
   fragment: PackSchemaFragment;
 }
 

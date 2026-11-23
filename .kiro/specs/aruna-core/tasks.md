@@ -69,7 +69,7 @@ All build sessions run under one Kiro sign-in (Google sign-in, 4,000 Kiroween cr
   - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5_
 
 - [ ] 9. Owner workspace UI
-  - [ ] 9.1 Build the single navigation shell (Board, Chat, Briefings, pack screens, Settings); only Playbook-driven content differs between tenants
+  - [x] 9.1 Build the single navigation shell (Board, Chat, Briefings, pack screens, Settings); only Playbook-driven content differs between tenants
   - [ ] 9.2 Build the task board: pipeline columns on wide viewports; per-status stacked view with filter chips on phone viewports; approve, reject, chat, and briefing actions all completable from the phone viewport
   - [ ] 9.3 Build task cards showing responsible agent, origin, status, and check/approval history; task detail shows the audit trail
   - [ ] 9.4 Build chat UI, briefings UI (today + archive), and settings UI (assistant rename, Playbook view, model configuration, export trigger — the owner triggers an export of their own tenant's data here; verification and deactivation are operator-only, task 10.4)

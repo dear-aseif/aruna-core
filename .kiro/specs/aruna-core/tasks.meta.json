@@ -487,6 +487,18 @@
         "chatSessionId": "sess_be075c34-fd67-4f55-a5f5-e336ffe2384e",
         "timestamp": 1795244554542
       }
+    ],
+    "9.1 Build the single navigation shell (Board, Chat, Briefings, pack screens, Settings); only Playbook-driven content differs between tenants": [
+      {
+        "executionId": "8c22894f-aca9-43c0-8f3b-7c00f4b94579",
+        "chatSessionId": "sess_b0a193c8-9624-4cdb-9b75-3a1f7bc7a1a7",
+        "timestamp": 1795403067509
+      },
+      {
+        "executionId": "8c22894f-aca9-43c0-8f3b-7c00f4b94579",
+        "chatSessionId": "sess_b0a193c8-9624-4cdb-9b75-3a1f7bc7a1a7",
+        "timestamp": 1795403786895
+      }
     ]
   }
 }

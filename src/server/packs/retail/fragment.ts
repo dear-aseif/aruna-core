@@ -31,6 +31,10 @@ export type RetailCatalog = z.infer<typeof catalog>;
 export const retailPack: PackDefinition = {
   id: "retail",
   label: "Retail Pack",
+  screens: [
+    { id: "catalog", label: "Catalog" },
+    { id: "stock", label: "Stock" },
+  ],
   fragment: {
     catalog,
     thresholds: { lowStock: z.number().int().nonnegative() },

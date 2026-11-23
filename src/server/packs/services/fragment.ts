@@ -25,6 +25,10 @@ export type ServicesCatalog = z.infer<typeof catalog>;
 export const servicesPack: PackDefinition = {
   id: "services",
   label: "Services Pack",
+  screens: [
+    { id: "catalog", label: "Catalog" },
+    { id: "bookings", label: "Bookings" },
+  ],
   fragment: {
     catalog,
     thresholds: {},

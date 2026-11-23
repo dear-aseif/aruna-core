@@ -7,4 +7,4 @@ for (const def of [retailPack, servicesPack]) {
   if (!getPack(def.id)) registerPack(def);
 }
 
-export { getPack, listPackIds, registerPack, type PackDefinition, type PackSchemaFragment } from "./registry";
+export { getPack, listPackIds, registerPack, type PackDefinition, type PackScreen, type PackSchemaFragment } from "./registry";
