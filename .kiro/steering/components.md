@@ -2,7 +2,7 @@
 
 Shared UI lives in `src/components/`. **Future UI tasks (9.2, 9.3, 9.4 and later) MUST compose from this
 library and extend it; they must not re-implement these pieces inline.** A new reusable piece is added
-here and listed below in the same change. Task card variants joined in 9.2 (see below); summary cards and the 9.3 history/detail views join later.
+here and listed below in the same change. Task card variants joined in 9.2 and the history/detail views in 9.3 (see below).
 
 ## Rules
 
@@ -45,6 +45,18 @@ here and listed below in the same change. Task card variants joined in 9.2 (see 
 Server side: `src/server/board/` (`loadBoard`, `approveFromBoard`, `rejectFromBoard`, `reviseFromBoard`); routes under `src/app/api/workspace/board` and `.../tasks/[id]/{approve,reject,revise}`.
 
 A revise re-checks the edited draft (`checkTaskWithReview`) and routes onward in the same request: the task goes to Pending Approval at the new revision if the checks pass, or to Working with the anomaly recorded if they fail. It does not simply return the task to In Review.
+
+## Catalogue (task 9.3, task cards and detail)
+
+| Component | File | Purpose |
+|---|---|---|
+| `TaskHistorySummary` | `task-history-summary.tsx` | Check results and approval decisions of one task, oldest first, times in the business timezone. Used on `TaskCard` and the detail. |
+| `AuditTrail` | `audit-trail.tsx` | Read-only list of a task's audit entries, oldest first (type label, time, actor, scalar facts). |
+| `TaskDetailView` | `task-detail-view.tsx` | The task detail page body: agent, origin, status, draft, history, audit trail. |
+
+`TaskCard` now also shows the origin (routine, maestro, direct, intake), the history summary, and an "Open details" link to `/board/<id>`.
+
+Server side: `loadTaskDetail` in `src/server/board/service.ts` (uses the 4.4 detail operation), pure mapping in `src/server/board/history.ts` (`formatTimestamp` renders UTC instants in the Playbook timezone); route `GET /api/workspace/tasks/[id]`; page `src/app/(workspace)/board/[id]/page.tsx`. Another tenant's task is a 404. Render proof: `npm run proof:render:detail` writes `docs/render-proof/9.3/`.
 
 ## Render proof
 

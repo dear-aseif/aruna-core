@@ -97,3 +97,12 @@ export async function listAuditEntries(tx: TenantTx, opts: { type?: string; limi
     : await tx.query<Row>(`select ${COLUMNS} from audit_log order by created_at desc, seq desc limit $1`, [limit]);
   return rows.map(toEntry);
 }
+/** Entries of the given types for many tasks of the caller's tenant, oldest first. One query (board cards, task 9.3). */
+export async function getEntriesForTasks(tx: TenantTx, taskIds: readonly string[], types: readonly string[]): Promise<AuditEntry[]> {
+  if (taskIds.length === 0 || types.length === 0) return [];
+  const rows = await tx.query<Row>(
+    `select ${COLUMNS} from audit_log where task_id = any($1::uuid[]) and type = any($2::text[]) order by created_at, seq`,
+    [taskIds, types],
+  );
+  return rows.map(toEntry);
+}

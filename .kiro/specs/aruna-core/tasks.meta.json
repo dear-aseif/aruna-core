@@ -545,6 +545,28 @@
         "executionId": "9c7806fb-ce3f-4a33-b273-7fab9fa5945f",
         "chatSessionId": "sess_68453bea-d7c0-47a6-ab67-d4776e34513a",
         "timestamp": 1795431016163
+      },
+      {
+        "executionId": "9c7806fb-ce3f-4a33-b273-7fab9fa5945f",
+        "chatSessionId": "sess_68453bea-d7c0-47a6-ab67-d4776e34513a",
+        "timestamp": 1795431090039
+      }
+    ],
+    "9.3 Build task cards showing responsible agent, origin, status, and check/approval history; task detail shows the audit trail": [
+      {
+        "executionId": "13fd965d-deb3-49cb-99ea-386e2bd99e79",
+        "chatSessionId": "sess_4d497674-1b9b-4e62-a374-cc8259621c5d",
+        "timestamp": 1795432270877
+      },
+      {
+        "executionId": "52f783e3-f871-4b48-a958-993e04cbc1c9",
+        "chatSessionId": "sess_2591307e-042d-4c82-83d5-0c99ea66cad9",
+        "timestamp": 1795432326778
+      },
+      {
+        "executionId": "52f783e3-f871-4b48-a958-993e04cbc1c9",
+        "chatSessionId": "sess_2591307e-042d-4c82-83d5-0c99ea66cad9",
+        "timestamp": 1795438712952
       }
     ]
   }

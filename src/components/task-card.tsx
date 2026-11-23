@@ -1,8 +1,11 @@
 "use client";
 import type { ReactNode } from "react";
 import type { BoardTask } from "@/server/board/service";
+import type { StringKey } from "@/i18n/strings";
+import { ButtonLink } from "./button-link";
 import { useT } from "./i18n-provider";
 import { StatusBadge } from "./status-badge";
+import { TaskHistorySummary } from "./task-history-summary";
 
 /**
  * One task on the board: title, status, responsible agent, and (for Pending Approval) the decision
@@ -19,7 +22,7 @@ export function TaskCard({ task, actions }: { task: BoardTask; actions?: ReactNo
         <StatusBadge status={task.status} />
       </div>
       <p className="text-caption text-ink-muted">
-        {t("board.agent")}: <span data-testid="task-agent">{task.agent}</span>
+        {t("board.agent")}: <span data-testid="task-agent">{task.agent}</span> · {t("task.origin")}: <span data-testid="task-origin">{t(`task.origin.${task.origin}` as StringKey)}</span>
       </p>
       {task.deadline ? (
         <p className="text-caption text-ink-soft">
@@ -41,7 +44,9 @@ export function TaskCard({ task, actions }: { task: BoardTask; actions?: ReactNo
           {t("board.errorLabel")}: {task.error}
         </p>
       ) : null}
+      <TaskHistorySummary checks={task.checks} approvals={task.approvals} />
       {actions}
+      <ButtonLink href={`/board/${task.id}`} size="sm" className="min-h-tap">{t("task.detail.open")}</ButtonLink>
     </article>
   );
 }

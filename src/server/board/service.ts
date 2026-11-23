@@ -3,11 +3,14 @@ import { AuthenticationError, resolveSession } from "../auth/service";
 import { callerFromAuth, withTenant, type Caller, type TenantTx } from "../dal";
 import { NotFoundError } from "../dal/errors";
 import { NoActivePlaybookError, getActivePlaybook } from "../playbook";
+import { getEntriesForTasks } from "../audit";
+import { CARD_HISTORY_TYPES, formatTimestamp, groupCardHistory, toTrailEntry, type ApprovalItem, type CheckItem, type TrailEntry } from "./history";
 import { getUiLanguage } from "../settings";
 import {
   ApprovalExpiredError,
   NotAwaitingApprovalError,
   TASK_STATUSES,
+  getTaskDetailForCaller,
   countTasksByStatusTx,
   listTasksTx,
   readTask,
@@ -50,6 +53,8 @@ export interface BoardTask {
   id: string;
   title: string;
   agent: string;
+  /** Where the task came from: routine, maestro, direct or intake. */
+  origin: string;
   status: TaskStatus;
   /** The payload revision the owner is shown; approval binds to it. */
   revision: number;
@@ -59,6 +64,10 @@ export interface BoardTask {
   /** Pending Approval only: what approving would do, from the checked draft. */
   draft: { actionType: string | null; fields: Record<string, DraftValue> } | null;
   error: string | null;
+  /** Checker results, oldest first. */
+  checks: CheckItem[];
+  /** Owner approval and rejection decisions, oldest first. */
+  approvals: ApprovalItem[];
 }
 
 export interface BoardModel {
@@ -93,30 +102,39 @@ export function formatDeadline(at: Date, timeZone: string, lang: Language): stri
 }
 
 /** Pure: one row to the board's card shape. */
-export function toBoardTask(row: TaskRow, timeZone: string, lang: Language): BoardTask {
+export function toBoardTask(row: TaskRow, timeZone: string, lang: Language, history: { checks: CheckItem[]; approvals: ApprovalItem[] } = { checks: [], approvals: [] }): BoardTask {
   const pending = row.status === "pending_approval";
   const payload = isRecord(row.payload) ? row.payload : {};
   return {
     id: row.id,
     title: row.title,
     agent: row.agent,
+    origin: row.origin,
     status: row.status,
     revision: row.payload_revision,
     createdAt: new Date(row.created_at).toISOString(),
     deadline: pending && row.approval_expires_at ? formatDeadline(new Date(row.approval_expires_at), timeZone, lang) : null,
     draft: pending ? { actionType: typeof payload.action_type === "string" ? payload.action_type : null, fields: scalarFields(payload.fields) } : null,
     error: row.error,
+    checks: history.checks,
+    approvals: history.approvals,
   };
 }
 
 /** Pure: group cards by status, in pipeline order. */
-export function buildBoardModel(rows: readonly TaskRow[], counts: Record<TaskStatus, number>, timeZone: string, lang: Language): BoardModel {
+export function buildBoardModel(
+  rows: readonly TaskRow[],
+  counts: Record<TaskStatus, number>,
+  timeZone: string,
+  lang: Language,
+  history: ReadonlyMap<string, { checks: CheckItem[]; approvals: ApprovalItem[] }> = new Map(),
+): BoardModel {
   const columns = Object.fromEntries(BOARD_STATUSES.map((s) => [s, [] as BoardTask[]])) as Record<TaskStatus, BoardTask[]>;
-  for (const r of rows) columns[r.status].push(toBoardTask(r, timeZone, lang));
+  for (const r of rows) columns[r.status].push(toBoardTask(r, timeZone, lang, history.get(r.id)));
   return { statuses: [...BOARD_STATUSES], counts, columns };
 }
 
-async function ownerCaller(token: unknown): Promise<Caller> {
+export async function ownerCaller(token: unknown): Promise<Caller> {
   const auth = await resolveSession(token);
   if (!auth) throw new AuthenticationError();
   if (auth.role !== "owner") throw new ShellForbiddenError();
@@ -134,14 +152,16 @@ async function expireOverdue(caller: Caller): Promise<void> {
   for (const t of pending) await readTask(caller, t.id);
 }
 
-async function readColumns(tx: TenantTx): Promise<{ rows: TaskRow[]; counts: Record<TaskStatus, number>; overdue: boolean; timeZone: string; lang: Language }> {
+async function readColumns(tx: TenantTx): Promise<{ rows: TaskRow[]; counts: Record<TaskStatus, number>; overdue: boolean; timeZone: string; lang: Language; history: ReturnType<typeof groupCardHistory> }> {
   const rows: TaskRow[] = [];
   for (const s of BOARD_STATUSES) rows.push(...(await listTasksTx(tx, { status: s, limit: BOARD_PAGE_LIMIT })));
   const counts = await countTasksByStatusTx(tx);
   const now = (await tx.maybeOne<{ t: Date }>("select clock_timestamp() as t"))!.t;
   const overdue = rows.some((r) => r.status === "pending_approval" && r.approval_expires_at !== null && new Date(r.approval_expires_at) <= now);
   const timeZone = (await getActivePlaybook(tx)).business.timezone;
-  return { rows, counts, overdue, timeZone, lang: await getUiLanguage(tx) };
+  const lang = await getUiLanguage(tx);
+  const entries = await getEntriesForTasks(tx, rows.map((r) => r.id), CARD_HISTORY_TYPES);
+  return { rows, counts, overdue, timeZone, lang, history: groupCardHistory(entries, timeZone, lang) };
 }
 
 /** The board for the caller's tenant. An overdue Pending Approval task is expired before it is listed. */
@@ -153,13 +173,45 @@ export async function loadBoardForCaller(caller: Caller): Promise<BoardModel> {
     await expireOverdue(caller);
     read = await withTenant(caller, readColumns);
   }
-  return buildBoardModel(read.rows, read.counts, read.timeZone, read.lang);
+  return buildBoardModel(read.rows, read.counts, read.timeZone, read.lang, read.history);
 }
 
 export async function loadBoard(token: unknown): Promise<BoardModel> {
   return loadBoardForCaller(await ownerCaller(token));
 }
 
+export interface TaskDetailModel {
+  task: BoardTask;
+  /** The checked draft fields (scalars), in every status. */
+  fields: Record<string, DraftValue>;
+  actionType: string | null;
+  /** Creation time in the business timezone. */
+  created: string;
+  timeZone: string;
+  /** The full audit trail of the task, oldest first. Read only. */
+  trail: TrailEntry[];
+}
+/**
+ * One task with its complete audit trail for the session's tenant (task 9.3, R3.3). Reads through the
+ * task 4.4 detail operation (lazy expiry first). Another tenant's task, or an unknown id, is
+ * NotFoundError. Times are shown in the Playbook timezone.
+ */
+export async function loadTaskDetail(token: unknown, taskId: unknown): Promise<TaskDetailModel> {
+  const caller = await ownerCaller(token);
+  const id = taskIdOrNotFound(taskId);
+  const detail = await getTaskDetailForCaller(caller, id);
+  const { timeZone, lang } = await withTenant(caller, async (tx) => ({ timeZone: (await getActivePlaybook(tx)).business.timezone, lang: await getUiLanguage(tx) }));
+  const grouped = groupCardHistory([...detail.checks, ...detail.approvals], timeZone, lang).get(detail.task.id) ?? { checks: [], approvals: [] };
+  const payload = isRecord(detail.task.payload) ? detail.task.payload : {};
+  return {
+    task: toBoardTask(detail.task, timeZone, lang, grouped),
+    fields: scalarFields(payload.fields),
+    actionType: typeof payload.action_type === "string" ? payload.action_type : null,
+    created: formatTimestamp(new Date(detail.task.created_at), timeZone, lang),
+    timeZone,
+    trail: detail.history.map((e) => toTrailEntry(e, timeZone, lang)),
+  };
+}
 export interface BoardDecision {
   taskId: string;
   decision: "approved" | "rejected";
