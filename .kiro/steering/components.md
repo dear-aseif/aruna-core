@@ -2,7 +2,7 @@
 
 Shared UI lives in `src/components/`. **Future UI tasks (9.2, 9.3, 9.4 and later) MUST compose from this
 library and extend it; they must not re-implement these pieces inline.** A new reusable piece is added
-here and listed below in the same change. Card variants (task cards, summary cards) join in 9.2/9.3.
+here and listed below in the same change. Task card variants joined in 9.2 (see below); summary cards and the 9.3 history/detail views join later.
 
 ## Rules
 
@@ -29,6 +29,22 @@ here and listed below in the same change. Card variants (task cards, summary car
 | `LanguageToggle` | `language-toggle.tsx` | EN \| ID switch; saves via the server, then refreshes. |
 | `I18nProvider`, `useT` | `i18n-provider.tsx` | Client access to the tenant's language and the strings table. |
 | `ScreenPlaceholder` | `screen-placeholder.tsx` | Placeholder body for screens built in later tasks. |
+
+## Catalogue (task 9.2, task board)
+
+| Component | File | Purpose |
+|---|---|---|
+| `TaskBoard` | `task-board.tsx` | The board: columns per status from md up, one status at a time with chips on phones; chat and briefing quick actions; shows action errors. |
+| `BoardColumn` | `board-column.tsx` | One status column (`data-testid="column-<status>"`); hidden on phones unless selected. |
+| `StatusFilterChips` | `status-filter-chips.tsx` | Phone-only status chips with counts (`md:hidden`). |
+| `StatusBadge` | `status-badge.tsx` | Localized status label; `statusLabelKey` maps a status to its string key. |
+| `TaskCard` | `task-card.tsx` | Default card variant: title, status, agent, Pending Approval deadline and checked draft, recorded error. `actions` slot. |
+| `ApprovalTaskCard` | `approval-task-card.tsx` | Pending Approval variant: Approve, Reject, Edit draft (revise) buttons calling the task API routes. |
+| `ButtonLink` | `button-link.tsx` | A link styled as a `Button`; `buttonClass()` in `button.tsx` is the shared styling. |
+
+Server side: `src/server/board/` (`loadBoard`, `approveFromBoard`, `rejectFromBoard`, `reviseFromBoard`); routes under `src/app/api/workspace/board` and `.../tasks/[id]/{approve,reject,revise}`.
+
+A revise re-checks the edited draft (`checkTaskWithReview`) and routes onward in the same request: the task goes to Pending Approval at the new revision if the checks pass, or to Working with the anomaly recorded if they fail. It does not simply return the task to In Review.
 
 ## Render proof
 

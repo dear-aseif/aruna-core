@@ -509,6 +509,43 @@
         "chatSessionId": "sess_b0a193c8-9624-4cdb-9b75-3a1f7bc7a1a7",
         "timestamp": 1795426284213
       }
+    ],
+    "9.2 Build the task board: pipeline columns on wide viewports; per-status stacked view with filter chips on phone viewports; approve, reject, chat, and briefing actions all completable from the phone viewport": [
+      {
+        "executionId": "efac0235-1612-4afa-ae07-32a3aabd7072",
+        "chatSessionId": "sess_9111f063-8ea7-4a49-bcb7-dde309c80155",
+        "timestamp": 1795427095201
+      },
+      {
+        "executionId": "a7dac3f9-b411-4975-a742-44d5c68c6d7a",
+        "chatSessionId": "sess_9111f063-8ea7-4a49-bcb7-dde309c80155",
+        "timestamp": 1795427208858
+      },
+      {
+        "executionId": "e7798a64-b92c-4c71-ad9f-04d7a9d3c7f6",
+        "chatSessionId": "sess_68453bea-d7c0-47a6-ab67-d4776e34513a",
+        "timestamp": 1795427253527
+      },
+      {
+        "executionId": "e7798a64-b92c-4c71-ad9f-04d7a9d3c7f6",
+        "chatSessionId": "sess_68453bea-d7c0-47a6-ab67-d4776e34513a",
+        "timestamp": 1795428664135
+      },
+      {
+        "executionId": "aae575ab-aa01-4b28-9f61-0f2fb5602769",
+        "chatSessionId": "sess_68453bea-d7c0-47a6-ab67-d4776e34513a",
+        "timestamp": 1795428950570
+      },
+      {
+        "executionId": "aae575ab-aa01-4b28-9f61-0f2fb5602769",
+        "chatSessionId": "sess_68453bea-d7c0-47a6-ab67-d4776e34513a",
+        "timestamp": 1795430315476
+      },
+      {
+        "executionId": "9c7806fb-ce3f-4a33-b273-7fab9fa5945f",
+        "chatSessionId": "sess_68453bea-d7c0-47a6-ab67-d4776e34513a",
+        "timestamp": 1795431016163
+      }
     ]
   }
 }

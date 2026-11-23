@@ -12,6 +12,11 @@ const SIZE: Record<ButtonSize, string> = {
   sm: "px-snug py-tight text-caption",
 };
 
+/** The one place button styling is composed; `Button` and `ButtonLink` both use it. */
+export function buttonClass(variant: ButtonVariant = "primary", size: ButtonSize = "md", extra = ""): string {
+  return `rounded-control ${VARIANT[variant]} ${SIZE[size]} ${extra}`.trim();
+}
+
 /** Shared button: `primary` for the main action, `outline` for secondary ones. */
 export function Button({
   variant = "primary",
@@ -20,5 +25,5 @@ export function Button({
   type = "button",
   ...rest
 }: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: ButtonVariant; size?: ButtonSize }) {
-  return <button type={type} className={`rounded-control ${VARIANT[variant]} ${SIZE[size]} ${className}`} {...rest} />;
+  return <button type={type} className={buttonClass(variant, size, className)} {...rest} />;
 }
