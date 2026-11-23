@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { WorkspaceShell } from "@/components/workspace-shell";
+import { DEFAULT_LANGUAGE, translate } from "@/i18n/strings";
 import { signOut } from "@/server/auth/authjs";
 import { AuthenticationError } from "@/server/auth";
 import { loadShell, ShellForbiddenError } from "@/server/workspace";
@@ -17,9 +18,9 @@ export default async function WorkspaceLayout({ children }: { children: React.Re
   }
   if (!shell) {
     return (
-      <main className="mx-auto max-w-md p-6">
-        <h1 className="text-xl font-semibold">Workspace not ready</h1>
-        <p className="mt-2 text-slate-600">This business has no active Playbook yet. Please contact the operator.</p>
+      <main className="mx-auto max-w-md p-gutter-lg">
+        <h1 className="text-title font-semibold">{translate(DEFAULT_LANGUAGE, "notReady.title")}</h1>
+        <p className="mt-snug text-ink-muted">{translate(DEFAULT_LANGUAGE, "notReady.body")}</p>
       </main>
     );
   }
@@ -28,7 +29,7 @@ export default async function WorkspaceLayout({ children }: { children: React.Re
     await signOut({ redirectTo: "/sign-in" });
   }
   return (
-    <WorkspaceShell businessName={shell.businessName} assistantName={shell.assistantName} signOut={doSignOut}
+    <WorkspaceShell businessName={shell.businessName} assistantName={shell.assistantName} language={shell.language} signOut={doSignOut}
       nav={shell.nav.map(({ id, label, href }) => ({ id, label, href }))}>
       {children}
     </WorkspaceShell>

@@ -15,6 +15,7 @@ source of truth for behavior; this file only says where things live.
   (app icon), `globals.css` (Tailwind CSS 4 via PostCSS).
 - `public/` — static assets served as-is; holds `icon-maskable.svg` (PWA
   maskable icon).
+- `src/components/` — shared UI library; compose from it (see `components.md`). `src/i18n/strings.ts` — the one EN/ID strings table.
 - `tests/unit/` — Vitest tests (`npm test`).
 - `tests/e2e/` — Playwright tests (`npm run test:e2e`). The default project
   is a phone viewport (Pixel 7): the product is mobile-first. Playwright

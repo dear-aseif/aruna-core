@@ -1,1 +1,36 @@
 @import "tailwindcss";
+
+/*
+ * Design tokens: the only place raw colours, spacing and font sizes are defined.
+ * Components use the generated utilities (bg-primary, text-ink-muted, p-gutter, text-caption ...)
+ * and never raw palette classes (guarded by tests/unit/design-tokens.test.ts).
+ */
+@theme {
+  --color-surface: #ffffff;
+  --color-surface-muted: #f8fafc;
+  --color-border: #e2e8f0;
+  --color-border-strong: #cbd5e1;
+  --color-ink: #0f172a;
+  --color-ink-soft: #334155;
+  --color-ink-muted: #64748b;
+  --color-hover: #e2e8f0;
+  --color-primary: #4f46e5;
+  --color-primary-ink: #ffffff;
+  --color-danger: #dc2626;
+
+  --spacing-tight: 0.25rem;
+  --spacing-snug: 0.5rem;
+  --spacing-cozy: 0.75rem;
+  --spacing-gutter: 1rem;
+  --spacing-gutter-lg: 1.5rem;
+  --spacing-rail: 14rem;
+  --spacing-tap: 3rem;
+  --spacing-clear-nav: 6rem;
+
+  --text-caption: 0.75rem;
+  --text-body: 0.875rem;
+  --text-title: 1.25rem;
+  --text-display: 1.5rem;
+
+  --radius-control: 0.25rem;
+}

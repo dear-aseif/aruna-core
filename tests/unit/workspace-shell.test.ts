@@ -5,6 +5,7 @@ import { withTenant, type Caller } from "@/server/dal";
 import { AuthenticationError } from "@/server/auth";
 import { activatePlaybook } from "@/server/playbook";
 import { buildNav, findPackScreen, getShellModelTx, loadShell } from "@/server/workspace";
+import { InvalidLanguageError, setUiLanguage } from "@/server/settings";
 import { trackTenant } from "../support/ledger";
 try {
   process.loadEnvFile(".env.local");
@@ -83,5 +84,38 @@ describe("getShellModelTx (runtime role, tenant-bound)", () => {
   it("loadShell refuses a missing or unknown session token", async () => {
     await expect(loadShell(undefined)).rejects.toBeInstanceOf(AuthenticationError);
     await expect(loadShell("not-a-real-token")).rejects.toBeInstanceOf(AuthenticationError);
+  });
+});
+
+describe("UI language setting (runtime role, tenant-bound)", () => {
+  const run = randomBytes(4).toString("hex");
+  const mk = (): Caller => ({ tenantId: randomUUID(), actor: "owner", actorId: `lang-${run}` });
+  const A = mk();
+  const B = mk();
+  afterAll(async () => {
+    await closeAllPools();
+  });
+  it("defaults to EN, persists per tenant, is audited, and never touches the other tenant", async () => {
+    for (const [c, doc] of [[A, services], [B, retail]] as const) {
+      trackTenant(c.tenantId);
+      await withTenantSession(
+        c.tenantId,
+        (cl) => cl.query("insert into tenants (id, name, type, status) values ($1, $2, 'pending', 'inactive')", [c.tenantId, `Lang ${run}`]),
+        "service",
+      );
+      expect((await activatePlaybook({ ...c, actor: "system" }, doc())).ok).toBe(true);
+    }
+    expect((await withTenant(A, getShellModelTx)).language).toBe("en");
+    expect(await withTenant(A, (tx) => setUiLanguage(tx, "id"))).toBe("id");
+    expect((await withTenant(A, getShellModelTx)).language).toBe("id");
+    expect((await withTenant(B, getShellModelTx)).language).toBe("en");
+    const audit = await withTenant(A, (tx) =>
+      tx.query<{ payload: { from: string; to: string }; actor: string }>("select payload, actor from audit_log where type = 'settings.ui_language_changed'"),
+    );
+    expect(audit).toEqual([{ payload: { from: "en", to: "id" }, actor: "owner" }]);
+  });
+  it("refuses an unsupported language and leaves the setting unchanged", async () => {
+    await expect(withTenant(A, (tx) => setUiLanguage(tx, "fr"))).rejects.toBeInstanceOf(InvalidLanguageError);
+    expect((await withTenant(A, getShellModelTx)).language).toBe("id");
   });
 });

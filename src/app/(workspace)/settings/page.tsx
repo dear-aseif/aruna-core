@@ -1,8 +1,4 @@
+import { ScreenPlaceholder } from "@/components/screen-placeholder";
 export default function Page() {
-  return (
-    <section>
-      <h1 className="text-xl font-semibold">Settings</h1>
-      <p className="mt-2 text-slate-600">Settings arrive in task 9.4.</p>
-    </section>
-  );
+  return <ScreenPlaceholder navId="settings" bodyKey="settings.body" />;
 }

@@ -3,7 +3,8 @@ import { AuthenticationError, resolveSession } from "../auth/service";
 import { withTenant, callerFromAuth, type TenantTx } from "../dal";
 import { getPack } from "../packs";
 import { getActivePlaybook, NoActivePlaybookError } from "../playbook";
-import { getAssistantName } from "../settings";
+import { getAssistantName, getUiLanguage, setUiLanguage } from "../settings";
+import type { Language } from "../../i18n/strings";
 
 /** One entry of the navigation shell. `href` is an app route; the shell never builds routes itself. */
 export interface NavItem {
@@ -16,6 +17,8 @@ export interface NavItem {
 export interface ShellModel {
   businessName: string;
   assistantName: string;
+  /** The tenant's UI language (EN by default). */
+  language: Language;
   pack: string;
   /** Core items first, then the active pack's screens, then Settings. */
   nav: NavItem[];
@@ -51,7 +54,8 @@ export function buildNav(packId: string): NavItem[] {
 export async function getShellModelTx(tx: TenantTx): Promise<ShellModel> {
   const pb = await getActivePlaybook(tx);
   const assistantName = await getAssistantName(tx);
-  return { businessName: pb.business.name, assistantName, pack: pb.pack, nav: buildNav(pb.pack) };
+  const language = await getUiLanguage(tx);
+  return { businessName: pb.business.name, assistantName, language, pack: pb.pack, nav: buildNav(pb.pack) };
 }
 
 /**
@@ -74,4 +78,15 @@ export async function loadShell(token: unknown): Promise<ShellModel | null> {
 /** True when `screenId` is a screen of the pack (guards the /p/[screen] route). */
 export function findPackScreen(packId: string, screenId: string): NavItem | null {
   return buildNav(packId).find((n) => n.kind === "pack" && n.href === `/p/${screenId}`) ?? null;
+}
+
+/**
+ * Server operation: set the UI language for the session's own tenant (owner sessions only).
+ * The tenant comes from the session, never from input; an unsupported value is refused.
+ */
+export async function setShellLanguage(token: unknown, language: unknown): Promise<Language> {
+  const auth = await resolveSession(token);
+  if (!auth) throw new AuthenticationError();
+  if (auth.role !== "owner") throw new ShellForbiddenError();
+  return withTenant(callerFromAuth(auth), (tx) => setUiLanguage(tx, language));
 }
