@@ -19,6 +19,7 @@
     "db:check": "tsx --env-file=.env.local scripts/db-check.ts",
     "db:seed": "tsx --env-file=.env.local scripts/seed.ts",
     "tasks:sweep": "tsx --env-file=.env.local scripts/expire-approvals.ts",
+    "routines:run": "tsx --env-file=.env.local scripts/run-routines.ts",
     "tasks:recover": "tsx --env-file=.env.local scripts/recover-stale-attempts.ts"
   },
   "dependencies": {

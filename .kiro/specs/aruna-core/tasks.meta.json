@@ -602,6 +602,18 @@
         "chatSessionId": "sess_cfff2a91-cd97-45e6-bbd2-cb6352d6b222",
         "timestamp": 1795441493327
       }
+    ],
+    "10.1 Implement the routine engine: per-tenant schedule from the Playbook, run by system cron on the Lightsail instance; pack briefing sections plug into one shared routine": [
+      {
+        "executionId": "40837c7c-cdf8-464c-9677-91d53ce67402",
+        "chatSessionId": "sess_b6aac36d-3649-4f90-8045-1c36fc21d148",
+        "timestamp": 1795476111456
+      },
+      {
+        "executionId": "40837c7c-cdf8-464c-9677-91d53ce67402",
+        "chatSessionId": "sess_b6aac36d-3649-4f90-8045-1c36fc21d148",
+        "timestamp": 1795476949473
+      }
     ]
   }
 }
