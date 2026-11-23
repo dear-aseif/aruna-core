@@ -9,6 +9,14 @@ import { ensureThreadsTx, listThreadsTx, listMessagesTx } from "@/server/threads
 import { transitionTask, type TaskRow, type TaskStatus } from "@/server/tasks";
 import {
   NOT_FOUND_TASK,
+  notFoundTask,
+  renderAgentActivity,
+  renderPendingApprovals,
+  renderRecentActivity,
+  renderStatusCounts,
+  renderTaskStatus,
+  renderUnknownAgent,
+  renderUnsupported,
   NotMaestroThreadError,
   QuestionNotPermittedError,
   STATUS_LABELS,
@@ -236,5 +244,26 @@ describe("guards", () => {
     await expect(askMaestro(agent(A), { threadId: maestroA, body: "status?" })).rejects.toBeInstanceOf(QuestionNotPermittedError);
     await expect(askMaestro(owner(A), { threadId: scribeA, body: "what is everyone doing" })).rejects.toBeInstanceOf(NotMaestroThreadError);
     await expect(askMaestro(owner(A), { threadId: maestroA, body: "   " })).rejects.toThrow();
+  });
+});
+
+describe("Indonesian templates cover every renderer (pure)", () => {
+  const agents = [{ id: "maestro", label: "Aruna" }, { id: "booking", label: "Booking" }] as never;
+  const at = new Date("2026-01-02T03:04:05.000Z");
+  const mark = { type: "task.created", actor: "system", actorId: "s1", at } as never;
+  const task = { title: "Konfirmasi", status: "pending_approval", approvalExpiresAt: at, lastActivity: mark } as never;
+  it("renders ID text for each renderer and keeps EN as the default", () => {
+    expect(renderPendingApprovals({ total: 1, shown: [task] } as never, "id")).toMatch(/^1 tugas menunggu persetujuan Anda:\n- "Konfirmasi": Menunggu Persetujuan \(aktivitas terakhir: .*persetujuan kedaluwarsa pada 2026/);
+    expect(renderPendingApprovals({ total: 1, shown: [task] } as never)).toContain("1 task is waiting for your approval");
+    expect(renderStatusCounts({ queued: 0, working: 0, in_review: 0, pending_approval: 2, done: 0, rejected: 0, expired: 0, failed: 1 }, "failed", "id")).toBe("1 tugas berstatus Gagal.");
+    expect(renderAgentActivity({ agents: [{ agent: { id: "booking", label: "Booking" }, openTotal: 0, shown: [] }], truncated: false } as never, "id")).toBe("Booking: tidak ada tugas terbuka.");
+    expect(renderRecentActivity([], "id")).toBe("Belum ada aktivitas yang tercatat.");
+    expect(renderRecentActivity([{ at, type: "task.created", actor: "system", actorId: "s1", taskTitle: "Konfirmasi" }] as never, "id")).toContain("task.created oleh system (s1) pada \"Konfirmasi\"");
+    expect(renderUnknownAgent("gudang", agents, "id")).toBe('Saya tidak punya agen bernama "gudang" di ruang kerja Anda. Agen yang dapat saya laporkan: Aruna, Booking.');
+    expect(renderUnsupported(agents, "id")).toMatch(/^Saya tidak dapat menjawab itu/);
+    expect(renderUnsupported(agents)).toMatch(/^I can't answer that/);
+    expect(notFoundTask("id")).toBe("Saya tidak dapat menemukan tugas itu di ruang kerja Anda.");
+    expect(notFoundTask()).toBe(NOT_FOUND_TASK);
+    expect(renderTaskStatus({ title: "T", agent: "booking", status: "done", approvalExpiresAt: null }, { type: "x", actor: "owner", actorId: "o", at }, "id")).toBe('"T" (booking): Selesai; aktivitas terakhir: x oleh owner (o) pada 2026-01-02T03:04:05.000Z.');
   });
 });

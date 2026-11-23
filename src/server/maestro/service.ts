@@ -4,7 +4,8 @@ import { MAESTRO_AGENT } from "../agents";
 import { listTasksTx, readTask } from "../tasks";
 import { MAX_MESSAGE_LENGTH, postMessageTx, type MessageRow, type ThreadRow } from "../threads";
 import {
-  NOT_FOUND_TASK,
+  notFoundTask,
+  renderTaskStatus,
   classifyQuestion,
   renderAgentActivity,
   renderPendingApprovals,
@@ -22,7 +23,8 @@ import {
   queryStatusCountsTx,
   queryTaskDetailTx,
 } from "./queries";
-import { STATUS_LABELS } from "./answers";
+import { getUiLanguage } from "../settings";
+import type { Language } from "../../i18n/strings";
 
 /**
  * Maestro live-data answers (task 8.3, design §2.6, R4.3).
@@ -71,38 +73,44 @@ async function applyLazyExpiry(caller: Caller): Promise<void> {
 }
 
 /** Compose the answer to one question on an open DAL transaction. Writes nothing. */
-export async function composeAnswerTx(tx: TenantTx, question: string): Promise<MaestroAnswer> {
+export async function composeAnswerTx(tx: TenantTx, question: string, lang?: Language): Promise<MaestroAnswer> {
+  const language = lang ?? (await getUiLanguage(tx));
   const agents = await queryKnownAgentsTx(tx);
   const intent = classifyQuestion(question, agents);
   switch (intent.kind) {
     case "task_status": {
       const detail = await queryTaskDetailTx(tx, intent.taskId);
-      if (!detail) return { intent: intent.kind, text: NOT_FOUND_TASK };
+      if (!detail) return { intent: intent.kind, text: notFoundTask(language) };
       const last = detail.history[detail.history.length - 1];
       const t = detail.task;
-      const expiry = t.status === "pending_approval" && t.approval_expires_at ? `; approval expires at ${t.approval_expires_at.toISOString()}` : "";
-      const lastText = last ? `; last activity: ${last.type} by ${last.actor} (${last.actorId}) at ${last.createdAt.toISOString()}` : "";
-      return { intent: intent.kind, text: `"${t.title}" (${t.agent}): ${STATUS_LABELS[t.status]}${expiry}${lastText}.` };
+      return {
+        intent: intent.kind,
+        text: renderTaskStatus(
+          { title: t.title, agent: t.agent, status: t.status, approvalExpiresAt: t.approval_expires_at },
+          last ? { type: last.type, actor: last.actor, actorId: last.actorId, at: last.createdAt } : null,
+          language,
+        ),
+      };
     }
     case "pending_approvals":
-      return { intent: intent.kind, text: renderPendingApprovals(await queryPendingApprovalsTx(tx)) };
+      return { intent: intent.kind, text: renderPendingApprovals(await queryPendingApprovalsTx(tx), language) };
     case "status_counts":
-      return { intent: intent.kind, text: renderStatusCounts(await queryStatusCountsTx(tx), intent.status) };
+      return { intent: intent.kind, text: renderStatusCounts(await queryStatusCountsTx(tx), intent.status, language) };
     case "agent_activity":
-      return { intent: intent.kind, text: renderAgentActivity(await queryAgentActivityTx(tx, intent.agent)) };
+      return { intent: intent.kind, text: renderAgentActivity(await queryAgentActivityTx(tx, intent.agent), language) };
     case "recent_activity":
-      return { intent: intent.kind, text: renderRecentActivity(await queryRecentActivityTx(tx)) };
+      return { intent: intent.kind, text: renderRecentActivity(await queryRecentActivityTx(tx), language) };
     case "unknown_agent":
-      return { intent: intent.kind, text: renderUnknownAgent(intent.name, agents) };
+      return { intent: intent.kind, text: renderUnknownAgent(intent.name, agents, language) };
     default:
-      return { intent: "unsupported", text: renderUnsupported(agents) };
+      return { intent: "unsupported", text: renderUnsupported(agents, language) };
   }
 }
 
 /** Keep a reply inside the message limit by dropping whole trailing lines, never by cutting a fact. */
-function fitMessage(text: string): string {
+function fitMessage(text: string, lang: Language): string {
   if (text.length <= MAX_MESSAGE_LENGTH) return text;
-  const note = "\n(The list was shortened to fit.)";
+  const note = lang === "id" ? "\n(Daftar dipersingkat agar muat.)" : "\n(The list was shortened to fit.)";
   const lines = text.split("\n");
   while (lines.length > 1 && lines.join("\n").length + note.length > MAX_MESSAGE_LENGTH) lines.pop();
   return lines.join("\n") + note;
@@ -121,8 +129,9 @@ export async function askMaestro(caller: Caller, input: { threadId: string; body
     const thread = await tx.getById<ThreadRow>("threads", input.threadId); // another tenant's thread is invisible
     if (thread.kind !== "maestro" || thread.agent !== MAESTRO_AGENT) throw new NotMaestroThreadError();
     const question: MessageRow = await postMessageTx(tx, { threadId: thread.id, sender: "owner", body: input.body });
-    const answer = await composeAnswerTx(tx, question.body);
-    const reply = await postMessageTx(tx, { threadId: thread.id, sender: "agent", body: fitMessage(answer.text) });
+    const language = await getUiLanguage(tx);
+    const answer = await composeAnswerTx(tx, question.body, language);
+    const reply = await postMessageTx(tx, { threadId: thread.id, sender: "agent", body: fitMessage(answer.text, language) });
     return { ...answer, threadId: thread.id, questionMessageId: question.id, answerMessageId: reply.id };
   });
 }
