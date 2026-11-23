@@ -34,3 +34,37 @@ export async function setUiLanguage(tx: TenantTx, language: unknown): Promise<La
   await tx.audit("settings.ui_language_changed", { from: before, to: language });
   return language;
 }
+export const MAX_ASSISTANT_NAME_LENGTH = 60;
+export const ASSISTANT_RENAME_AUDIT_TYPE = "settings.assistant_name_changed";
+export class InvalidAssistantNameError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "InvalidAssistantNameError";
+  }
+}
+/** Only the owner renames the assistant. Nothing was written. */
+export class RenameNotPermittedError extends Error {
+  constructor(readonly actor: string) {
+    super("only the owner can rename the assistant");
+    this.name = "RenameNotPermittedError";
+  }
+}
+/**
+ * Rename the assistant (task 9.4, R4.5). The name lives only in `settings.assistant_name`; every
+ * surface reads it through `getAssistantName`, so the change is visible on the next read everywhere.
+ * The old and new names are audited in the same transaction, attributed to the owner. Renaming to the
+ * current name writes nothing. Returns the saved name.
+ */
+export async function renameAssistant(tx: TenantTx, input: unknown): Promise<string> {
+  if (tx.caller.actor !== "owner") throw new RenameNotPermittedError(tx.caller.actor);
+  if (typeof input !== "string") throw new InvalidAssistantNameError("name must be text");
+  const name = input.trim().replace(/\s+/g, " ");
+  if (!name) throw new InvalidAssistantNameError("name is required");
+  if ([...name].length > MAX_ASSISTANT_NAME_LENGTH) throw new InvalidAssistantNameError(`name is longer than ${MAX_ASSISTANT_NAME_LENGTH} characters`);
+  if (/\p{Cc}/u.test(name)) throw new InvalidAssistantNameError("name has control characters");
+  const before = await getAssistantName(tx);
+  if (before === name) return before;
+  await tx.updateById("settings", tx.tenantId, { assistant_name: name, updated_at: new Date() }, "tenant_id");
+  await tx.audit(ASSISTANT_RENAME_AUDIT_TYPE, { field: "assistant_name", from: before, to: name });
+  return name;
+}

@@ -14,7 +14,7 @@ const SIZE: Record<ButtonSize, string> = {
 
 /** The one place button styling is composed; `Button` and `ButtonLink` both use it. */
 export function buttonClass(variant: ButtonVariant = "primary", size: ButtonSize = "md", extra = ""): string {
-  return `rounded-control ${VARIANT[variant]} ${SIZE[size]} ${extra}`.trim();
+  return `rounded-control disabled:opacity-50 ${VARIANT[variant]} ${SIZE[size]} ${extra}`.trim();
 }
 
 /** Shared button: `primary` for the main action, `outline` for secondary ones. */

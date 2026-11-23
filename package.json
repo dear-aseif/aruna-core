@@ -13,6 +13,7 @@
     "proof:render": "RENDER_PROOF=1 playwright test tests/e2e/render-proof.spec.ts",
     "proof:render:board": "RENDER_PROOF=1 playwright test tests/e2e/board-render-proof.spec.ts",
     "proof:render:detail": "RENDER_PROOF=1 playwright test tests/e2e/task-detail-render-proof.spec.ts",
+    "proof:render:chat": "RENDER_PROOF=1 playwright test tests/e2e/chat-settings-render-proof.spec.ts",
     "db:bootstrap-roles": "tsx --env-file=.env.local scripts/bootstrap-roles.ts",
     "db:migrate": "tsx --env-file=.env.local scripts/migrate.ts",
     "db:check": "tsx --env-file=.env.local scripts/db-check.ts",

@@ -568,6 +568,40 @@
         "chatSessionId": "sess_2591307e-042d-4c82-83d5-0c99ea66cad9",
         "timestamp": 1795438712952
       }
+    ],
+    "9.4 Build chat UI, briefings UI (today + archive), and settings UI (assistant rename, Playbook view, model configuration, export trigger — the owner triggers an export of their own tenant's data here; verification and deactivation are operator-only, task 10.4)": [
+      {
+        "executionId": "6ad04d05-2260-42e6-9f04-abad3486fe38",
+        "chatSessionId": "sess_cfff2a91-cd97-45e6-bbd2-cb6352d6b222",
+        "timestamp": 1795439686371
+      },
+      {
+        "executionId": "6d946325-e222-4537-ba87-008688767ebf",
+        "chatSessionId": "sess_cfff2a91-cd97-45e6-bbd2-cb6352d6b222",
+        "timestamp": 1795439751624
+      },
+      {
+        "executionId": "6d946325-e222-4537-ba87-008688767ebf",
+        "chatSessionId": "sess_cfff2a91-cd97-45e6-bbd2-cb6352d6b222",
+        "timestamp": 1795441493252
+      },
+      {
+        "executionId": "d8f5da86-d6ed-4e82-b5f2-95faa973f9df",
+        "chatSessionId": "sess_cfff2a91-cd97-45e6-bbd2-cb6352d6b222",
+        "timestamp": 1795441786889
+      },
+      {
+        "executionId": "d8f5da86-d6ed-4e82-b5f2-95faa973f9df",
+        "chatSessionId": "sess_cfff2a91-cd97-45e6-bbd2-cb6352d6b222",
+        "timestamp": 1795442494159
+      }
+    ],
+    "9. Owner workspace UI": [
+      {
+        "executionId": "6d946325-e222-4537-ba87-008688767ebf",
+        "chatSessionId": "sess_cfff2a91-cd97-45e6-bbd2-cb6352d6b222",
+        "timestamp": 1795441493327
+      }
     ]
   }
 }
