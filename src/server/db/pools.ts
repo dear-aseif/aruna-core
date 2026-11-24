@@ -1,5 +1,6 @@
 import { Pool, type PoolClient } from "pg";
 import { poolConfigFor, type DbRole } from "./config";
+import { isDeactivatedWriteError, TenantDeactivatedError } from "./errors";
 
 // One pool per role, created lazily and cached across dev hot reloads.
 const g = globalThis as unknown as { __arunaPools?: Partial<Record<DbRole, Pool>> };
@@ -51,7 +52,8 @@ export async function withTenantSession<T>(
     } catch {
       /* connection already unusable; original error is what matters */
     }
-    throw err;
+    // The write guard (migration 0010) refuses writes for a deactivated tenant; surface it as one typed error.
+    throw isDeactivatedWriteError(err) ? new TenantDeactivatedError() : err;
   } finally {
     client.release();
   }

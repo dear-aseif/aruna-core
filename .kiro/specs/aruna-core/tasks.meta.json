@@ -653,6 +653,23 @@
         "chatSessionId": "sess_42127e89-91fd-469b-867a-ff5799f4e2a0",
         "timestamp": 1795490156255
       }
+    ],
+    "10.4 Implement tenant deactivation following the fixed order (export → verify → deactivate, data retained read-only). Verification and deactivation are **operator-only**. The archive carries a cutoff timestamp and an entity-count manifest; any change after the cutoff requires a fresh export and verification before deactivation may proceed. Deactivation revokes active sessions, expires pending approvals, and blocks further writes for that tenant from old sessions, the public intake page, and routines — tenant status is checked on every server operation": [
+      {
+        "executionId": "927afe98-e409-4e65-982a-7a4240fc8f18",
+        "chatSessionId": "sess_991c1111-37aa-4b9c-b774-04e38d159dc6",
+        "timestamp": 1795491352172
+      },
+      {
+        "executionId": "7d4c76dc-f01c-41af-8a02-6bf64b66fb47",
+        "chatSessionId": "sess_991c1111-37aa-4b9c-b774-04e38d159dc6",
+        "timestamp": 1795491385394
+      },
+      {
+        "executionId": "7d4c76dc-f01c-41af-8a02-6bf64b66fb47",
+        "chatSessionId": "sess_991c1111-37aa-4b9c-b774-04e38d159dc6",
+        "timestamp": 1795492226938
+      }
     ]
   }
 }

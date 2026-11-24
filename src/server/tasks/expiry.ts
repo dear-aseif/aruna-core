@@ -68,6 +68,20 @@ export async function expireTaskIfOverdue(tx: TenantTx, taskId: string): Promise
   await cancelPendingActions(tx, expired);
   return expired;
 }
+/**
+ * Tenant deactivation (task 10.4, design §2.9): expire EVERY Pending Approval task of the caller's
+ * tenant now, deadline or not, through the same state machine and the same action cancellers as a
+ * deadline expiry, in the caller's transaction (so it commits or rolls back with the deactivation).
+ * Returns the ids of the expired tasks.
+ */
+export async function expireAllPendingApprovals(tx: TenantTx, reason = "tenant_deactivated"): Promise<string[]> {
+  const rows = await tx.query<{ id: string }>("select id from tasks where status = 'pending_approval' order by created_at, id for update");
+  for (const r of rows) {
+    const expired = await transitionTask(tx, r.id, "expired", { reason });
+    await cancelPendingActions(tx, expired);
+  }
+  return rows.map((r) => r.id);
+}
 export interface SweepResult {
   tenants: number;
   expired: number;

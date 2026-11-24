@@ -103,18 +103,18 @@ async function writeStatus(
   clearExpiry = false,
 ): Promise<TaskRow> {
   await tx.query("select set_config('aruna.task_transition', 'on', true)");
-  try {
-    const rows = await tx.query<TaskRow>(
-      `update tasks set status = $2, error = $3, updated_at = now(),
-         approval_expires_at = case when $4::int is not null then now() + make_interval(mins => $4::int)
-                                    when $5::boolean then null else approval_expires_at end
-       where id = $1 returning *`,
-      [taskId, to, error, expiryMinutes, clearExpiry],
-    );
-    return rows[0];
-  } finally {
-    await tx.query("select set_config('aruna.task_transition', '', true)");
-  }
+  // No `finally`: if the update fails the transaction is aborted (and the setting is transaction-local), and a
+  // further query here would replace the real error (for example the deactivated-tenant refusal) with
+  // "current transaction is aborted".
+  const rows = await tx.query<TaskRow>(
+    `update tasks set status = $2, error = $3, updated_at = now(),
+       approval_expires_at = case when $4::int is not null then now() + make_interval(mins => $4::int)
+                                  when $5::boolean then null else approval_expires_at end
+     where id = $1 returning *`,
+    [taskId, to, error, expiryMinutes, clearExpiry],
+  );
+  await tx.query("select set_config('aruna.task_transition', '', true)");
+  return rows[0];
 }
 /** Used when the active Playbook does not set thresholds.approvalExpiryMinutes (design: default 15). */
 export const DEFAULT_APPROVAL_EXPIRY_MINUTES = 15;

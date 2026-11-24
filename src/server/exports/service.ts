@@ -41,7 +41,7 @@ function catalogOf(playbooks: Row[]): { version: number | null; catalog: Record<
 const catalogCount = (catalog: Record<string, unknown>): number =>
   Object.values(catalog).reduce<number>((n, v) => n + (Array.isArray(v) ? v.length : 0), 0);
 
-const json = (v: unknown): Uint8Array => Buffer.from(JSON.stringify(v, null, 2) + "\n", "utf8");
+export const json = (v: unknown): Uint8Array => Buffer.from(JSON.stringify(v, null, 2) + "\n", "utf8");
 
 export async function runOwnerExport(caller: Caller): Promise<ExportResult> {
   if (caller.actor !== "owner") throw new ShellForbiddenError(); // the owner's own export; verification is operator-only (10.4)
