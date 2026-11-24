@@ -74,7 +74,16 @@ Server side: `loadTaskDetail` in `src/server/board/service.ts` (uses the 4.4 det
 | `ModelConfigPanel` | `model-config-panel.tsx` | Read-only model configuration. |
 | `ExportPanel` | `export-panel.tsx` | Owner export trigger; disabled until the export service (10.3) is installed. |
 
-Server side: `src/server/chat/` (`routeChatMessage` is the one routing rule: a recognized Maestro-thread question goes to `askMaestro`, everything else to `submitCommand`; `loadChat`, `sendChatMessage`), `src/server/settings/owner.ts` (`loadSettings`, `renameAssistantForOwner`; `renameAssistant` in `settings/index.ts` audits `settings.assistant_name_changed`), `src/server/exports/` (owner-only trigger seam, `setExportRunner` for task 10.3), `src/server/briefings/` (`loadBriefings`, empty until 10.2), `src/server/workspace/owner-errors.ts` (HTTP mapping). Render proof: `npm run proof:render:chat` writes `docs/render-proof/9.4/`.
+Server side: `src/server/chat/` (`routeChatMessage` is the one routing rule: a recognized Maestro-thread question goes to `askMaestro`, everything else to `submitCommand`; `loadChat`, `sendChatMessage`), `src/server/settings/owner.ts` (`loadSettings`, `renameAssistantForOwner`; `renameAssistant` in `settings/index.ts` audits `settings.assistant_name_changed`), `src/server/exports/` (owner-only trigger seam, `setExportRunner` for task 10.3), `src/server/briefings/` (`loadBriefings`; real since 10.2), `src/server/workspace/owner-errors.ts` (HTTP mapping). Render proof: `npm run proof:render:chat` writes `docs/render-proof/9.4/`.
+
+## Catalogue (task 10.2, briefings)
+
+| Component | File | Purpose |
+|---|---|---|
+| `BriefingsView` | `briefings-view.tsx` | Today + archive; each row has an "Open briefing" `ButtonLink` to `/briefings/<id>`. Honest empty states. |
+| `BriefingDetailView` | `briefing-detail-view.tsx` | Briefing Detail: date, live-named greeting, generated time, sections (summary + items, task items link to `/board/<id>`). Read only. |
+
+Server side: `src/server/briefings/` (`store.ts`: `storeBriefing` idempotent per (tenant, date), `installBriefingArchive` wires the routine sink; `render.ts`: deterministic templates, `registerSectionRenderer` is where pack sections (12.6, 13.5) plug in; `index.ts`: `loadBriefings`, `loadBriefingDetail`); route `GET /api/workspace/briefings/[id]`; page `src/app/(workspace)/briefings/[id]/page.tsx`. The table stores facts only; text and the assistant name are produced on read.
 
 ## Render proof
 

@@ -1,7 +1,17 @@
 "use client";
-import type { BriefingsModel } from "@/server/briefings";
+import type { BriefingListItem, BriefingsModel } from "@/server/briefings";
+import { ButtonLink } from "./button-link";
 import { useT } from "./i18n-provider";
-/** Today's briefing and the archive. With no data it shows the honest empty state; it never shows sample content. */
+/** Today's briefing and the archive; each opens its detail. With no data it shows the honest empty state, never sample content. */
+function BriefingRow({ b, testId }: { b: BriefingListItem; testId?: string }) {
+  const { t } = useT();
+  return (
+    <div data-testid={testId} data-briefing-id={b.id} data-date={b.date} className="flex items-center justify-between gap-snug rounded-control border border-border p-cozy text-body text-ink">
+      <span>{b.dateLabel}</span>
+      <ButtonLink href={`/briefings/${b.id}`} size="sm" className="min-h-tap">{t("briefings.open")}</ButtonLink>
+    </div>
+  );
+}
 export function BriefingsView({ model }: { model: BriefingsModel }) {
   const { t, nav } = useT();
   return (
@@ -10,7 +20,7 @@ export function BriefingsView({ model }: { model: BriefingsModel }) {
       <div className="flex flex-col gap-snug">
         <h2 className="text-body font-semibold text-ink-soft">{t("briefings.today")}</h2>
         {model.today ? (
-          <p data-testid="briefing-today" className="rounded-control border border-border p-cozy text-body text-ink">{model.today.date}</p>
+          <BriefingRow b={model.today} testId="briefing-today" />
         ) : (
           <p data-testid="briefings-empty-today" className="rounded-control border border-border p-cozy text-body text-ink-muted">{t("briefings.emptyToday")}</p>
         )}
@@ -22,7 +32,7 @@ export function BriefingsView({ model }: { model: BriefingsModel }) {
         ) : (
           <ul data-testid="briefing-archive" className="flex flex-col gap-snug">
             {model.archive.map((b) => (
-              <li key={b.id} className="rounded-control border border-border p-cozy text-body text-ink">{b.date}</li>
+              <li key={b.id}><BriefingRow b={b} testId="briefing-archive-item" /></li>
             ))}
           </ul>
         )}

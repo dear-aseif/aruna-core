@@ -614,6 +614,23 @@
         "chatSessionId": "sess_b6aac36d-3649-4f90-8045-1c36fc21d148",
         "timestamp": 1795476949473
       }
+    ],
+    "10.2 Create the `briefings` migration (tenant-scoped, RLS) and implement briefing generation from records only (yesterday's outcomes, today's pack facts, pending approvals always listed explicitly), with archive storage and reopening from the workspace": [
+      {
+        "executionId": "434e82f3-24bd-4dda-aa62-dcf39cb74a37",
+        "chatSessionId": "sess_86bbbe51-b8eb-4fbd-95b1-8c6c61d2450f",
+        "timestamp": 1795477703294
+      },
+      {
+        "executionId": "1926fe0f-4d08-4edc-9e9a-122b70367b8e",
+        "chatSessionId": "sess_86bbbe51-b8eb-4fbd-95b1-8c6c61d2450f",
+        "timestamp": 1795477725818
+      },
+      {
+        "executionId": "1926fe0f-4d08-4edc-9e9a-122b70367b8e",
+        "chatSessionId": "sess_86bbbe51-b8eb-4fbd-95b1-8c6c61d2450f",
+        "timestamp": 1795478476939
+      }
     ]
   }
 }
