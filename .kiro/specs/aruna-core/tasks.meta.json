@@ -670,6 +670,25 @@
         "chatSessionId": "sess_991c1111-37aa-4b9c-b774-04e38d159dc6",
         "timestamp": 1795492226938
       }
+    ],
+    "10.5 Write briefing-fidelity tests with per-fact assertions (each fact stated in a briefing is asserted against its source record — not merely that the source facts exist; pending approvals always present), an export-completeness test against the design §2.9 entity list (including threads and messages), a cutoff test (a change after the export cutoff blocks deactivation until a fresh export and verification), and deactivation-enforcement tests (after deactivation, writes via an old session, the public intake page, and a routine are all refused)": [
+      {
+        "executionId": "b3e16f3b-44db-435d-848c-337366b7fded",
+        "chatSessionId": "sess_b3465116-3efa-41f0-866b-7145372c5854",
+        "timestamp": 1795493307946
+      },
+      {
+        "executionId": "b3e16f3b-44db-435d-848c-337366b7fded",
+        "chatSessionId": "sess_b3465116-3efa-41f0-866b-7145372c5854",
+        "timestamp": 1795500783505
+      }
+    ],
+    "10. Briefing routine and data export": [
+      {
+        "executionId": "b3e16f3b-44db-435d-848c-337366b7fded",
+        "chatSessionId": "sess_b3465116-3efa-41f0-866b-7145372c5854",
+        "timestamp": 1795500783580
+      }
     ]
   }
 }
