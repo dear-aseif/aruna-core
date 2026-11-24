@@ -4,7 +4,7 @@ import { hashPassword } from "../../src/server/auth/password";
 import { withTenant } from "../../src/server/dal";
 import { closeAllPools } from "../../src/server/db";
 import { activatePlaybook } from "../../src/server/playbook";
-import { deleteTenants } from "../support/tenant-cleanup";
+import { deferTenantCleanup } from "../support/ledger";
 
 test("home exposes the PWA manifest and sends signed-out visitors to sign-in", async ({ page, request }) => {
   await page.goto("/");
@@ -69,6 +69,8 @@ const fixtures = [
 ];
 
 test.describe("signed-in workspace shell", () => {
+  // One worker owns this group's fixtures: one beforeAll, one afterAll (fullyParallel would re-run beforeAll per worker).
+  test.describe.configure({ mode: "serial" });
   test.beforeAll(async () => {
     for (const f of fixtures) {
       const caller = { tenantId: f.tenantId, actor: "system" as const, actorId: `e2e-shell-${run}` };
@@ -84,7 +86,7 @@ test.describe("signed-in workspace shell", () => {
     }
   });
   test.afterAll(async () => {
-    await deleteTenants(fixtures.map((f) => f.tenantId));
+    deferTenantCleanup(fixtures.map((f) => f.tenantId));
     await closeAllPools();
   });
 
@@ -124,6 +126,8 @@ test.describe("signed-in workspace shell", () => {
 
 // Language switching: EN | ID in the shell, saved per tenant through the server, isolated between tenants.
 test.describe("shell language", () => {
+  // One worker owns this group's fixtures: one beforeAll, one afterAll (fullyParallel would re-run beforeAll per worker).
+  test.describe.configure({ mode: "serial" });
   const lrun = randomBytes(4).toString("hex");
   const lpass = `pw-${randomBytes(12).toString("base64url")}`;
   const mkTenant = (n: string) => ({ tenantId: randomUUID(), email: `lang-${n}-${lrun}@e2e.example`, doc: fixtures[n === "a" ? 0 : 1].doc });
@@ -144,7 +148,7 @@ test.describe("shell language", () => {
     }
   });
   test.afterAll(async () => {
-    await deleteTenants([A.tenantId, B.tenantId]);
+    deferTenantCleanup([A.tenantId, B.tenantId]);
     await closeAllPools();
   });
   async function signIn(page: import("@playwright/test").Page, email: string) {

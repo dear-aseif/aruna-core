@@ -1,22 +1,17 @@
-import { closeAllPools } from "@/server/db";
-import { SEEDED_TENANT_IDS, deleteTenants, purgeTestAuditEntries } from "./tenant-cleanup";
-import { clearLedger, readLedger } from "./ledger";
-
-/** Runs once after all test files: removes every fixture they recorded (leftovers of a crashed run too). */
-export default function setup() {
+import { enterRunGate } from "./run-gate";
+/**
+ * Vitest global setup: holds the cross-runner gate for the whole run; the returned teardown runs after
+ * all test files and removes every recorded fixture (leftovers of a crashed run too), but only when no
+ * other runner (Playwright) is still live on the shared database. See run-gate.ts.
+ */
+export default async function setup() {
   try {
     process.loadEnvFile(".env.local");
   } catch {
     /* env may already be provided by the shell */
   }
+  const gate = await enterRunGate();
   return async () => {
-    const { tenants, auditActors } = readLedger();
-    try {
-      await deleteTenants(tenants);
-      for (const a of auditActors) await purgeTestAuditEntries(SEEDED_TENANT_IDS, a);
-      clearLedger();
-    } finally {
-      await closeAllPools();
-    }
+    await gate.finish();
   };
 }

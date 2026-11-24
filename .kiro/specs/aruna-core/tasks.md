@@ -84,7 +84,7 @@ All build sessions run under one Kiro sign-in (Google sign-in, 4,000 Kiroween cr
   - _Requirements: 1.4, 9.1, 9.2, 9.3, 9.4 — Property 9_
 
 - [ ] 11. Checkpoint — core complete
-  - [ ] 11.1 Ensure all tests pass; the skeleton runs end to end with both tenants seeded (no pack flows yet). Ask the founder if questions arise.
+  - [x] 11.1 Ensure all tests pass; the skeleton runs end to end with both tenants seeded (no pack flows yet). Ask the founder if questions arise.
   - [ ] 11.2 Deployment smoke (task 14.1 pulled forward — the first of two deployments): deploy the core to the Lightsail instance with HTTPS, activate the system cron entries that exist so far, and verify the live app on a phone viewport. The final deployment in group 14 repeats this with both packs.
   - [ ] 11.3 Eligibility Gate, part 1 (checklist `cek-gerbang-eligibility-kiroween-2026-11-23.md`, sections A–C): the two application folders of tasks 12.1/13.1 exist as scaffolds with their README files; evaluator credentials are prepared for the submission form only (never in the repository); Elsa verifies the gate from a fresh clone plus the live URL — this checkpoint may not be marked complete on test results alone.
 

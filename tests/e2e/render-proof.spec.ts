@@ -5,7 +5,7 @@ import { hashPassword } from "../../src/server/auth/password";
 import { withTenant } from "../../src/server/dal";
 import { closeAllPools } from "../../src/server/db";
 import { activatePlaybook } from "../../src/server/playbook";
-import { deleteTenants } from "../support/tenant-cleanup";
+import { deferTenantCleanup } from "../support/ledger";
 
 // Render proof for task 9.1: Pixel 7 screenshots of the shell, EN and ID, for one synthetic tenant
 // built from the seed Playbook (playbooks/denana.json). Opt-in so normal runs leave the repo clean:
@@ -36,7 +36,7 @@ test.beforeAll(async () => {
   expect((await activatePlaybook(caller, doc)).ok).toBe(true);
 });
 test.afterAll(async () => {
-  await deleteTenants([tenantId]);
+  deferTenantCleanup([tenantId]);
   await closeAllPools();
 });
 

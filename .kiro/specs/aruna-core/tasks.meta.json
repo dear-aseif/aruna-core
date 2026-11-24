@@ -689,6 +689,18 @@
         "chatSessionId": "sess_b3465116-3efa-41f0-866b-7145372c5854",
         "timestamp": 1795500783580
       }
+    ],
+    "11.1 Ensure all tests pass; the skeleton runs end to end with both tenants seeded (no pack flows yet). Ask the founder if questions arise.": [
+      {
+        "executionId": "467003c1-36ff-4a95-82a6-d48435d3bb87",
+        "chatSessionId": "sess_5384a26e-750b-4a82-a142-07c4ca34b124",
+        "timestamp": 1795501535681
+      },
+      {
+        "executionId": "467003c1-36ff-4a95-82a6-d48435d3bb87",
+        "chatSessionId": "sess_5384a26e-750b-4a82-a142-07c4ca34b124",
+        "timestamp": 1795502826025
+      }
     ]
   }
 }

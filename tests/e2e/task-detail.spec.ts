@@ -2,7 +2,7 @@ import { randomBytes } from "node:crypto";
 import { expect, test, type Page } from "@playwright/test";
 import { closeAllPools } from "../../src/server/db";
 import { createBoardTask, createBoardTenant, type BoardTenant } from "../support/board-fixtures";
-import { deleteTenants } from "../support/tenant-cleanup";
+import { deferTenantCleanup } from "../support/ledger";
 try {
   process.loadEnvFile(".env.local");
 } catch {
@@ -18,7 +18,7 @@ test.beforeAll(async () => {
   B = await createBoardTenant("db", run);
 });
 test.afterAll(async () => {
-  await deleteTenants([A.tenantId, B.tenantId]);
+  deferTenantCleanup([A.tenantId, B.tenantId]);
   await closeAllPools();
 });
 async function signIn(page: Page, t: BoardTenant) {

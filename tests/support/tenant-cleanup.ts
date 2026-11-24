@@ -10,6 +10,36 @@ export const SEEDED_TENANT_IDS = [
 const CHILD_TABLES = ["export_verifications", "sessions", "messages", "threads", "briefings", "audit_log", "tasks", "playbooks", "settings", "profiles"] as const;
 const RLS_TABLES = [...CHILD_TABLES, "tenants"] as const;
 
+const TRANSIENT = /lock timeout|could not obtain lock|deadlock|connection timeout|Connection terminated|ECONNRESET|ETIMEDOUT/i;
+/**
+ * Runs one cleanup transaction with a SHORT lock_timeout and bounded retries. The cleanup DDL needs
+ * ACCESS EXCLUSIVE locks; while it waits for them it queues every other session behind itself, so a
+ * long wait stalls the whole suite (sign-ins, approvals, teardown connects). A short timeout caps that
+ * stall; the retry (with jitter) then tries again once the table is quiet. Connection failures retry too.
+ */
+async function cleanupTx<T>(work: (client: import("pg").PoolClient) => Promise<T>): Promise<T> {
+  let last: unknown;
+  for (let attempt = 1; attempt <= 12; attempt++) {
+    let client: import("pg").PoolClient | undefined;
+    try {
+      client = await getPool("migrator").connect();
+      await client.query("begin");
+      await client.query("set local lock_timeout = '2s'");
+      await client.query("select pg_advisory_xact_lock(5150001)"); // serialize concurrent cleanups
+      const out = await work(client);
+      await client.query("commit");
+      return out;
+    } catch (err) {
+      last = err;
+      if (client) await client.query("rollback").catch(() => {});
+      if (!TRANSIENT.test(String((err as Error)?.message ?? err))) throw err;
+      await new Promise((r) => setTimeout(r, 250 * attempt + Math.random() * 500));
+    } finally {
+      client?.release();
+    }
+  }
+  throw last;
+}
 /**
  * Test-support only (never imported by src/). Removes synthetic tenants and every dependent row
  * as the MIGRATOR (table owner), in one transaction:
@@ -24,17 +54,12 @@ export async function deleteTenants(ids: readonly string[]): Promise<number> {
   const seeded = targets.filter((i) => (SEEDED_TENANT_IDS as readonly string[]).includes(i));
   if (seeded.length) throw new Error("refusing to delete a seeded tenant");
 
-  const client = await getPool("migrator").connect();
-  try {
-    await client.query("begin");
-    await client.query("set local lock_timeout = '30s'");
-    await client.query("select pg_advisory_xact_lock(5150001)"); // serialize concurrent cleanups
+  return cleanupTx(async (client) => {
     const found = await client.query<{ table_name: string }>(
       "select table_name from information_schema.columns where table_schema = 'public' and column_name = 'tenant_id'",
     );
     const unknown = found.rows.map((r) => r.table_name).filter((t) => !(CHILD_TABLES as readonly string[]).includes(t));
     if (unknown.length) throw new Error(`cleanup does not know tenant-scoped table(s): ${unknown.join(", ")}`);
-
     for (const t of RLS_TABLES) await client.query(`alter table "${t}" disable row level security`);
     await client.query("alter table audit_log disable trigger audit_log_no_update_delete");
     for (const t of CHILD_TABLES) await client.query(`delete from "${t}" where tenant_id = any($1::uuid[])`, [targets]);
@@ -44,16 +69,9 @@ export async function deleteTenants(ids: readonly string[]): Promise<number> {
       await client.query(`alter table "${t}" enable row level security`);
       await client.query(`alter table "${t}" force row level security`);
     }
-    await client.query("commit");
     return res.rowCount ?? 0;
-  } catch (err) {
-    await client.query("rollback").catch(() => {});
-    throw err;
-  } finally {
-    client.release();
-  }
+  });
 }
-
 /** Every tenant id in the database except the two seeded ones (migrator view: RLS briefly off, read-only). */
 export async function listNonSeedTenantIds(): Promise<string[]> {
   const client = await getPool("migrator").connect();
@@ -80,23 +98,13 @@ export async function listNonSeedTenantIds(): Promise<string[]> {
  */
 export async function purgeTestAuditEntries(tenantIds: readonly string[], actorId: string): Promise<number> {
   if (!actorId.startsWith("test-")) throw new Error("only test-* actor ids may be purged");
-  const client = await getPool("migrator").connect();
-  try {
-    await client.query("begin");
-    await client.query("set local lock_timeout = '30s'");
-    await client.query("select pg_advisory_xact_lock(5150001)");
+  return cleanupTx(async (client) => {
     await client.query('alter table "audit_log" disable row level security');
     await client.query("alter table audit_log disable trigger audit_log_no_update_delete");
     const res = await client.query("delete from audit_log where actor_id = $1 and tenant_id = any($2::uuid[])", [actorId, tenantIds]);
     await client.query("alter table audit_log enable trigger audit_log_no_update_delete");
     await client.query('alter table "audit_log" enable row level security');
     await client.query('alter table "audit_log" force row level security');
-    await client.query("commit");
     return res.rowCount ?? 0;
-  } catch (err) {
-    await client.query("rollback").catch(() => {});
-    throw err;
-  } finally {
-    client.release();
-  }
+  });
 }

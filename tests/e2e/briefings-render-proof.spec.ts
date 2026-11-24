@@ -4,7 +4,7 @@ import { withTenant } from "../../src/server/dal";
 import { closeAllPools } from "../../src/server/db";
 import { storeBriefing } from "../../src/server/briefings";
 import { createBoardTenant, type BoardTenant } from "../support/board-fixtures";
-import { deleteTenants } from "../support/tenant-cleanup";
+import { deferTenantCleanup } from "../support/ledger";
 // Render proof for task 10.2: Pixel 7 screenshots of the briefings list and a reopened briefing, EN then ID,
 // for one synthetic tenant holding one stored briefing (today, in the business timezone).
 // Opt-in so normal runs leave the repo clean:  npm run proof:render:briefings
@@ -49,7 +49,7 @@ test.beforeAll(async () => {
   );
 });
 test.afterAll(async () => {
-  await deleteTenants([T.tenantId]);
+  deferTenantCleanup([T.tenantId]);
   await closeAllPools();
 });
 test("briefings list and detail on a phone, EN then ID", async ({ page }) => {

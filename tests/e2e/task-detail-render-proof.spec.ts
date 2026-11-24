@@ -2,7 +2,7 @@ import { randomBytes } from "node:crypto";
 import { expect, test } from "@playwright/test";
 import { closeAllPools } from "../../src/server/db";
 import { createBoardTask, createBoardTenant, type BoardTenant } from "../support/board-fixtures";
-import { deleteTenants } from "../support/tenant-cleanup";
+import { deferTenantCleanup } from "../support/ledger";
 // Render proof for task 9.3: Pixel 7 screenshots of a task detail, EN then ID, for one synthetic tenant.
 // Opt-in so normal runs leave the repo clean:  npm run proof:render:detail
 try {
@@ -18,7 +18,7 @@ test.beforeAll(async () => {
   T = await createBoardTenant("proof93", run);
 });
 test.afterAll(async () => {
-  await deleteTenants([T.tenantId]);
+  deferTenantCleanup([T.tenantId]);
   await closeAllPools();
 });
 test("task detail on a phone, EN then ID", async ({ page }) => {

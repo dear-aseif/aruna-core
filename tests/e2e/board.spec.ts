@@ -3,7 +3,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { withTenant } from "../../src/server/dal";
 import { closeAllPools } from "../../src/server/db";
 import { createBoardTask, createBoardTenant, taskState, type BoardTenant } from "../support/board-fixtures";
-import { deleteTenants } from "../support/tenant-cleanup";
+import { deferTenantCleanup } from "../support/ledger";
 
 try {
   process.loadEnvFile(".env.local");
@@ -22,7 +22,7 @@ test.beforeAll(async () => {
   B = await createBoardTenant("b", run);
 });
 test.afterAll(async () => {
-  await deleteTenants([A.tenantId, B.tenantId]);
+  deferTenantCleanup([A.tenantId, B.tenantId]);
   await closeAllPools();
 });
 
@@ -31,16 +31,7 @@ async function signIn(page: Page, t: BoardTenant) {
   await page.getByLabel("Email").fill(t.email);
   await page.getByLabel("Password").fill(t.password);
   await page.getByRole("button", { name: "Sign in" }).click();
-  // One retry: a sign-in that overlaps another spec's tenant cleanup (brief table-level DDL) can fail transiently.
-  try {
-    await expect(page).toHaveURL(/\/board$/, { timeout: 15_000 });
-  } catch {
-    await page.goto("/sign-in");
-    await page.getByLabel("Email").fill(t.email);
-    await page.getByLabel("Password").fill(t.password);
-    await page.getByRole("button", { name: "Sign in" }).click();
-    await expect(page).toHaveURL(/\/board$/);
-  }
+  await expect(page).toHaveURL(/\/board$/);
 }
 const chip = (page: Page, status: string) => page.getByTestId("status-chips").locator(`[data-status="${status}"]`);
 const column = (page: Page, status: string) => page.getByTestId(`column-${status}`);

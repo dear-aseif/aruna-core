@@ -2,7 +2,7 @@ import { randomBytes } from "node:crypto";
 import { expect, test, type Page } from "@playwright/test";
 import { closeAllPools } from "../../src/server/db";
 import { createBoardTenant, type BoardTenant } from "../support/board-fixtures";
-import { deleteTenants } from "../support/tenant-cleanup";
+import { deferTenantCleanup } from "../support/ledger";
 try {
   process.loadEnvFile(".env.local");
 } catch {
@@ -18,22 +18,14 @@ test.beforeAll(async () => {
   B = await createBoardTenant("chat-b", run);
 });
 test.afterAll(async () => {
-  await deleteTenants([A.tenantId, B.tenantId]);
+  deferTenantCleanup([A.tenantId, B.tenantId]);
   await closeAllPools();
 });
 async function signIn(page: Page, t: BoardTenant) {
-  for (let attempt = 0; attempt < 2; attempt++) {
-    await page.goto("/sign-in");
-    await page.getByLabel("Email").fill(t.email);
-    await page.getByLabel("Password").fill(t.password);
-    await page.getByRole("button", { name: "Sign in" }).click();
-    try {
-      await expect(page).toHaveURL(/\/board$/, { timeout: 15_000 });
-      return;
-    } catch {
-      /* one retry: a sign-in that overlaps another spec's tenant cleanup can fail transiently */
-    }
-  }
+  await page.goto("/sign-in");
+  await page.getByLabel("Email").fill(t.email);
+  await page.getByLabel("Password").fill(t.password);
+  await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page).toHaveURL(/\/board$/);
 }
 const noSidewaysScroll = async (page: Page) => expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(0);

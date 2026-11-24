@@ -24,6 +24,8 @@ try {
  * tenant's record is invisible (NotFoundError) and NOT audited; a cross-tenant WRITE or declared
  * reference is refused AND writes exactly one security.cross_tenant_attempt entry.
  *
+ * Attempt counts are scoped to this run's own actor id: the seeded tenants are shared with every other
+ * test file running in parallel, so an unscoped count of the tenant's log is global state.
  * The seeded tenants are only read, apart from the audit entries the refused attempts write.
  * Those entries carry this run's unique `test-` actor id and are removed as the migrator by the
  * global teardown (the append-only log forbids it for the runtime roles), leaving both tenants as seeded.
@@ -37,7 +39,7 @@ const T: Caller = { tenantId: tokoSeed.tenantId, actor: "owner", actorId: ACTOR 
 
 const attemptCount = (c: Caller) =>
   withTenant(c, async (tx) =>
-    Number((await tx.query<{ n: string }>("select count(*)::text as n from audit_log where type = $1", [CROSS_TENANT_AUDIT_TYPE]))[0].n),
+    Number((await tx.query<{ n: string }>("select count(*)::text as n from audit_log where type = $1 and actor_id = $2", [CROSS_TENANT_AUDIT_TYPE, ACTOR]))[0].n),
   );
 
 const attemptsBy = (c: Caller) =>
