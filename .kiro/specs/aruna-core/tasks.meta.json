@@ -701,6 +701,42 @@
         "chatSessionId": "sess_5384a26e-750b-4a82-a142-07c4ca34b124",
         "timestamp": 1795502826025
       }
+    ],
+    "11.2 Deployment smoke (task 14.1 pulled forward — the first of two deployments): deploy the core to the Lightsail instance with HTTPS, activate the system cron entries that exist so far, and verify the live app on a phone viewport. The final deployment in group 14 repeats this with both packs.": [
+      {
+        "executionId": "05f11255-1a9c-4e74-b55f-5e501d647e44",
+        "chatSessionId": "sess_759c81f8-98ae-4580-b60f-8f7ef18b774a",
+        "timestamp": 1795520466116
+      },
+      {
+        "executionId": "05f11255-1a9c-4e74-b55f-5e501d647e44",
+        "chatSessionId": "sess_759c81f8-98ae-4580-b60f-8f7ef18b774a",
+        "timestamp": 1795520475035
+      }
+    ],
+    "11.3 Eligibility Gate, part 1 (checklist `cek-gerbang-eligibility-kiroween-2026-11-23.md`, sections A–C): the two application folders of tasks 12.1/13.1 exist as scaffolds with their README files; evaluator credentials are prepared for the submission form only (never in the repository); Elsa verifies the gate from a fresh clone plus the live URL — this checkpoint may not be marked complete on test results alone.": [
+      {
+        "executionId": "a30c55f7-50df-45e3-8495-05f6f2639592",
+        "chatSessionId": "sess_5d494855-f55b-4054-9137-da94ea3d3568",
+        "timestamp": 1795521027895
+      },
+      {
+        "executionId": "d6e1edda-bd52-421b-b64e-cdf7955a97b7",
+        "chatSessionId": "sess_5d494855-f55b-4054-9137-da94ea3d3568",
+        "timestamp": 1795521067377
+      },
+      {
+        "executionId": "b8cf7c9b-9485-4b92-835e-a945126d3043",
+        "chatSessionId": "sess_5d494855-f55b-4054-9137-da94ea3d3568",
+        "timestamp": 1795522022484
+      }
+    ],
+    "11. Checkpoint — core complete": [
+      {
+        "executionId": "b8cf7c9b-9485-4b92-835e-a945126d3043",
+        "chatSessionId": "sess_5d494855-f55b-4054-9137-da94ea3d3568",
+        "timestamp": 1795522022608
+      }
     ]
   }
 }

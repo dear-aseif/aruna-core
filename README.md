@@ -8,12 +8,20 @@ Built as a **Kiroween 2026** entry (Skeleton Crew). Specification first: the ful
 spec lives in [`/.kiro/specs/aruna-core/`](.kiro/specs/aruna-core/) and is the
 source of truth for everything this codebase does.
 
-## Proof applications (one codebase, two tenants)
+## Live demo
 
-- **Denana** — services pack: a women-only facial treatment studio (treatments,
-  bookings, a public intake page).
-- **Toko Seragam** — retail pack: a school-uniform shop (product variants, stock,
-  purchase orders, goods receipt).
+https://aruna.pahamai.com
+
+## Map: one core, two applications
+
+| Part | Where | What |
+|---|---|---|
+| Core | [`src/`](src/), [`db/`](db/) | Tenancy, task pipeline, Checker + Approval, audit log, Model Gateway, briefings, export |
+| App 1: Denana (Services) | [`apps/denana-services/`](apps/denana-services/) | Women-only facial studio in Bima: treatments, bookings, public intake page |
+| App 2: Toko Seragam (Retail) | [`apps/toko-seragam-retail/`](apps/toko-seragam-retail/) | School-uniform shop: variants, stock, purchase orders, goods receipt |
+
+Both applications run on the same core as two concurrent tenants. Each folder
+README says how to demo it.
 
 ## Non-negotiable rules baked into the core
 
@@ -34,8 +42,9 @@ provider-agnostic Model Gateway · hosted on AWS Lightsail.
 
 ## Status
 
-Spec phase complete and amended after an independent model review
-(requirements v1 · design v1.4 · tasks v1.1). Build in progress.
+Spec: requirements v1 · design v1.4 · tasks v1.2. The core is deployed live
+(24 Nov 2026). The application packs land in group 12 (Retail) and group 13
+(Services); until then the two application folders are scaffolds.
 
 ## Licence
 
