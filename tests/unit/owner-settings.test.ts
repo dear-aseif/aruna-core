@@ -9,6 +9,7 @@ import { loadChat, sendChatMessage } from "@/server/chat";
 import { withTenant, type Caller } from "@/server/dal";
 import { closeAllPools, withTenantSession } from "@/server/db";
 import { ExportUnavailableError, requestOwnExport, setExportRunner } from "@/server/exports";
+import { runOwnerExport } from "@/server/exports/service";
 import { activatePlaybook } from "@/server/playbook";
 import { ASSISTANT_RENAME_AUDIT_TYPE, InvalidAssistantNameError, RenameNotPermittedError, renameAssistant } from "@/server/settings";
 import { loadSettings, renameAssistantForOwner } from "@/server/settings/owner";
@@ -43,7 +44,7 @@ beforeAll(async () => {
   await withTenant(system(A), async (tx) => tx.insert("profiles", { email: opEmail, password_hash: await hashPassword(password), role: "operator" }), "service");
   operatorToken = (await signInWithPassword(opEmail, password))!.sessionToken;
 }, 90_000);
-afterEach(() => setExportRunner(null));
+afterEach(() => setExportRunner(runOwnerExport)); // restore the real service the tests may have swapped
 afterAll(async () => {
   await closeAllPools();
 });
@@ -95,7 +96,7 @@ describe("settings view", () => {
     expect(s.playbook.catalog).toEqual([{ group: "treatments", items: expect.arrayContaining(["Facial Dasar"]) }]);
     expect(s.playbook.templates.bookingConfirmation).toContain("{customer}");
     expect(s.model).toMatchObject({ ok: true, provider: "bedrock", source: "default" });
-    expect(s.exportAvailable).toBe(false);
+    expect(s.exportAvailable).toBe(true); // the export service (10.3) is installed
   });
   it("refuses an operator or signed-out caller", async () => {
     await expect(loadSettings(operatorToken)).rejects.toBeInstanceOf(ShellForbiddenError);
@@ -103,18 +104,20 @@ describe("settings view", () => {
   });
 });
 describe("export trigger", () => {
-  it("is unavailable until the export service (task 10.3) is installed, and exports nothing", async () => {
+  it("answers unavailable, and exports nothing, when no runner is installed", async () => {
+    setExportRunner(null);
+    expect((await loadSettings(A.token)).exportAvailable).toBe(false);
     await expect(requestOwnExport(A.token)).rejects.toBeInstanceOf(ExportUnavailableError);
   });
   it("runs for the owner's OWN tenant only: the tenant comes from the session, never from input", async () => {
     const seen: Caller[] = [];
     setExportRunner(async (caller) => {
       seen.push(caller);
-      return { cutoff: "2026-11-20T00:00:00.000Z", manifest: { tasks: 1 }, downloadPath: `/exports/${caller.tenantId}` };
+      return { archive: new Uint8Array(), summary: { cutoff: "2026-11-20T00:00:00.000Z", manifest: { tasks: 1 }, fileName: `${caller.tenantId}.zip` } };
     });
     expect(requestOwnExport.length).toBe(1); // the token is the only input
-    expect(await requestOwnExport(A.token)).toMatchObject({ downloadPath: `/exports/${A.id}` });
-    expect(await requestOwnExport(B.token)).toMatchObject({ downloadPath: `/exports/${B.id}` });
+    expect(await requestOwnExport(A.token)).toMatchObject({ summary: { fileName: `${A.id}.zip` } });
+    expect(await requestOwnExport(B.token)).toMatchObject({ summary: { fileName: `${B.id}.zip` } });
     expect(seen.map((c) => [c.tenantId, c.actor, c.actorId])).toEqual([
       [A.id, "owner", A.userId],
       [B.id, "owner", B.userId],
@@ -125,7 +128,7 @@ describe("export trigger", () => {
     let calls = 0;
     setExportRunner(async () => {
       calls++;
-      return { cutoff: "", manifest: {}, downloadPath: "" };
+      return { archive: new Uint8Array(), summary: { cutoff: "", manifest: {}, fileName: "" } };
     });
     await expect(requestOwnExport(operatorToken)).rejects.toBeInstanceOf(ShellForbiddenError);
     await expect(requestOwnExport(undefined)).rejects.toBeInstanceOf(AuthenticationError);

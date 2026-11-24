@@ -641,6 +641,18 @@
         "chatSessionId": "sess_86bbbe51-b8eb-4fbd-95b1-8c6c61d2450f",
         "timestamp": 1795488763388
       }
+    ],
+    "10.3 Implement the export service: per-tenant archive (JSON, CSV for flat entities) covering the full entity list of design §2.9 — playbook (including version), catalog, treatments, variants, stock, suppliers, purchase orders and their lines, bookings, tasks, threads, messages, briefings, settings, business profile, and the full audit log, for every pack that holds data; credentials and auth secrets are never exported. The owner can trigger an export of their own tenant's data at any time (task 9.4); the export itself is audited with entity counts": [
+      {
+        "executionId": "9ea5c4f1-b8b1-498d-ab1a-72012bcf6cf6",
+        "chatSessionId": "sess_42127e89-91fd-469b-867a-ff5799f4e2a0",
+        "timestamp": 1795489324061
+      },
+      {
+        "executionId": "9ea5c4f1-b8b1-498d-ab1a-72012bcf6cf6",
+        "chatSessionId": "sess_42127e89-91fd-469b-867a-ff5799f4e2a0",
+        "timestamp": 1795490156255
+      }
     ]
   }
 }

@@ -72,9 +72,9 @@ Server side: `loadTaskDetail` in `src/server/board/service.ts` (uses the 4.4 det
 | `AssistantNameForm` | `assistant-name-form.tsx` | Rename the assistant (server validates and audits). |
 | `PlaybookPanel` | `playbook-panel.tsx` | Read-only Playbook view. |
 | `ModelConfigPanel` | `model-config-panel.tsx` | Read-only model configuration. |
-| `ExportPanel` | `export-panel.tsx` | Owner export trigger; disabled until the export service (10.3) is installed. |
+| `ExportPanel` | `export-panel.tsx` | Owner export trigger. Calls `POST /api/workspace/settings/export`, shows the cutoff and total record count (from response headers), and offers the returned zip as a download link (`export-download`). Disabled only if no runner is installed. |
 
-Server side: `src/server/chat/` (`routeChatMessage` is the one routing rule: a recognized Maestro-thread question goes to `askMaestro`, everything else to `submitCommand`; `loadChat`, `sendChatMessage`), `src/server/settings/owner.ts` (`loadSettings`, `renameAssistantForOwner`; `renameAssistant` in `settings/index.ts` audits `settings.assistant_name_changed`), `src/server/exports/` (owner-only trigger seam, `setExportRunner` for task 10.3), `src/server/briefings/` (`loadBriefings`; real since 10.2), `src/server/workspace/owner-errors.ts` (HTTP mapping). Render proof: `npm run proof:render:chat` writes `docs/render-proof/9.4/`.
+Server side: `src/server/chat/` (`routeChatMessage` is the one routing rule: a recognized Maestro-thread question goes to `askMaestro`, everything else to `submitCommand`; `loadChat`, `sendChatMessage`), `src/server/settings/owner.ts` (`loadSettings`, `renameAssistantForOwner`; `renameAssistant` in `settings/index.ts` audits `settings.assistant_name_changed`), `src/server/exports/` (owner-only trigger `requestOwnExport`; real service since 10.3: `service.ts` runs one explicit-column SQL statement in the owner's tenant session, `registry.ts` lists the exported entities and is where packs register theirs with `registerExportEntity`, `archive.ts` builds the zip and CSV), `src/server/briefings/` (`loadBriefings`; real since 10.2), `src/server/workspace/owner-errors.ts` (HTTP mapping). Render proof: `npm run proof:render:chat` writes `docs/render-proof/9.4/`.
 
 ## Catalogue (task 10.2, briefings)
 

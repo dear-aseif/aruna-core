@@ -71,13 +71,16 @@ test("phone: briefings show the honest empty state", async ({ page }) => {
   await expect(page.getByTestId("briefings-empty-archive")).toBeVisible();
   await noSidewaysScroll(page);
 });
-test("phone: settings rename the assistant everywhere; Playbook and model are shown; export is unavailable until 10.3", async ({ page }) => {
+test("phone: settings rename the assistant everywhere; Playbook and model are shown; the owner exports their own data", async ({ page }) => {
   await signIn(page, A);
   await page.goto("/settings");
   await expect(page.getByTestId("playbook-business")).toContainText("Denana");
   await expect(page.getByTestId("settings-model")).toContainText("bedrock");
-  await expect(page.getByTestId("export-run")).toBeDisabled();
-  await expect(page.getByTestId("export-unavailable")).toBeVisible();
+  await expect(page.getByTestId("export-run")).toBeEnabled();
+  await expect(page.getByTestId("export-unavailable")).toHaveCount(0);
+  await page.getByTestId("export-run").click();
+  await expect(page.getByTestId("export-result")).toContainText("Export ready.");
+  await expect(page.getByTestId("export-download")).toHaveAttribute("download", /^aruna-export-\d{8}T\d{6}Z\.zip$/);
   await noSidewaysScroll(page);
   await page.getByLabel("Assistant name").fill("Sari");
   await page.getByRole("button", { name: "Save name" }).click();
@@ -95,7 +98,9 @@ test("phone: chat and settings render in Indonesian after the language switch", 
   await expect(page.getByRole("button", { name: "Kirim" })).toBeVisible();
   await page.goto("/settings");
   await expect(page.getByRole("button", { name: "Simpan nama" })).toBeVisible();
-  await expect(page.getByTestId("export-unavailable")).toHaveText("Ekspor data belum tersedia.");
+  await expect(page.getByTestId("export-run")).toHaveText("Ekspor data saya");
+  await page.getByTestId("export-run").click();
+  await expect(page.getByTestId("export-result")).toContainText("Ekspor siap.");
   await page.goto("/briefings");
   await expect(page.getByTestId("briefings-empty-today")).toHaveText("Belum ada ringkasan yang dibuat untuk hari ini.");
 });
@@ -114,5 +119,7 @@ test("chat, settings and export APIs refuse signed-out requests; another tenant'
   const res = await page.request.post("/api/workspace/chat/messages", { headers: { cookie: cookieB }, data: { threadId: theirs.selectedThreadId, body: "What is waiting for my approval?" } });
   expect(res.status()).toBe(404);
   const exp = await page.request.post("/api/workspace/settings/export", { headers: { cookie: cookieB } });
-  expect(exp.status()).toBe(503);
+  expect(exp.status()).toBe(200); // B's own export: a zip with B's cutoff and manifest
+  expect(exp.headers()["content-type"]).toBe("application/zip");
+  expect(Object.keys(JSON.parse(exp.headers()["x-export-manifest"])).sort()).toContain("audit_log");
 });
